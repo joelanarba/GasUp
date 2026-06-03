@@ -41,10 +41,10 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
 > Deferred to their phases: VERIFYING/weight (Phase 5), Paystack payment (Phase 7 — orders are UNPAID now).
 
 ## Phase 4 — Differentiator 1: Predictive refill
-- [ ] Burn-rate calc: from a student's delivered orders, compute avg days-between-refills;
-      before 2nd refill, fall back to base_burn × householdSize
-- [ ] Gas-gauge component + "≈N days left" nudge on student dashboard
-- [ ] Recharts consumption curve
+- [x] Burn-rate calc in `src/lib/prediction.ts` (avg days-between-refills × fill size;
+      <2 refills → base_burn 0.18kg/day × householdSize). Unit-checked + verified on real seed data.
+- [x] Gas-gauge SVG component + "≈N days left" nudge + level-based copy on student dashboard.
+- [x] Recharts consumption curve (Area) with a "today" reference line. Build clean; pages 200.
 
 ## Phase 5 — Differentiator 2: Verified-fill trust
 - [ ] Supplier uploads filled kg + proof image at VERIFYING step

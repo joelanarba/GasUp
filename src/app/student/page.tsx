@@ -1,23 +1,37 @@
 import Link from "next/link";
-import { Gauge, ShoppingBag, History, Sparkles, ChevronRight } from "lucide-react";
+import { ShoppingBag, History, ChevronRight, PackageOpen } from "lucide-react";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/order-status-badge";
+import { PredictionCard } from "@/components/prediction-card";
 import { cylinderLabel } from "@/lib/cylinders";
+import { computePrediction, type Delivery } from "@/lib/prediction";
 
 export default async function StudentDashboard() {
   const user = await currentUser();
   const name = user?.name ?? "there";
 
-  const activeOrder = await prisma.order.findFirst({
-    where: { studentId: user!.id, status: { notIn: ["COMPLETED", "CANCELLED", "DISPUTED"] } },
-    include: { supplier: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [student, activeOrder, deliveredOrders] = await Promise.all([
+    prisma.user.findUnique({ where: { id: user!.id } }),
+    prisma.order.findFirst({
+      where: { studentId: user!.id, status: { notIn: ["COMPLETED", "CANCELLED", "DISPUTED"] } },
+      include: { supplier: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.order.findMany({
+      where: { studentId: user!.id, deliveredAt: { not: null } },
+      select: { deliveredAt: true, requestedKg: true, verifiedWeightKg: true },
+      orderBy: { deliveredAt: "asc" },
+    }),
+  ]);
+
+  const deliveries: Delivery[] = deliveredOrders
+    .filter((o) => o.deliveredAt)
+    .map((o) => ({ deliveredAt: o.deliveredAt as Date, kg: o.verifiedWeightKg ?? o.requestedKg }));
+  const prediction = computePrediction(deliveries, student?.householdSize ?? 1);
 
   return (
     <DashboardShell role="STUDENT" name={name}>
@@ -26,28 +40,25 @@ export default async function StudentDashboard() {
         <h1 className="font-display text-3xl font-semibold tracking-tight">{name.split(" ")[0]}</h1>
       </div>
 
-      <Card className="reveal mt-6 overflow-hidden" style={{ animationDelay: "120ms" }}>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-primary" /> Your gas level
-            </CardTitle>
-            <CardDescription>Refill prediction from your history</CardDescription>
-          </div>
-          <Badge variant="accent">
-            <Sparkles className="h-3 w-3" /> Predictive
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="grid place-items-center rounded-md border border-dashed border-border bg-muted/40 px-6 py-10 text-center">
-            <p className="font-display text-lg font-semibold">Gas-gauge lands next build</p>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              We&apos;ll forecast “≈N days left” from your refill cadence and nudge you before
-              the cylinder runs dry.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="reveal mt-6" style={{ animationDelay: "120ms" }}>
+        {prediction.hasData ? (
+          <PredictionCard prediction={prediction} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PackageOpen className="h-5 w-5 text-primary" /> Your gas level
+              </CardTitle>
+              <CardDescription>We&apos;ll predict your refill once you&apos;ve had one delivery.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link href="/student/order">Order your first refill</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {activeOrder && (
         <Link
