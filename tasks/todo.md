@@ -77,9 +77,11 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
       (resend/mnotify/paystack rows). See lessons.md re: dev-server / .next / Neon pitfalls.
 
 ## Phase 8 — Tracking sim + admin reports
-- [ ] Leaflet map animating rider marker hostel→station→hostel (simulated)
-- [ ] Admin: users, suppliers, orders tables; reports (orders, completed, top suppliers,
-      revenue, pooling rate) with Recharts
+- [x] Leaflet map (OSM tiles) animating a rider marker depot↔hostel (eased, simulated);
+      shows on the student order detail when ON_THE_WAY. Loaded via next/dynamic ssr:false.
+- [x] Admin reports (Recharts): orders-by-status bar, top-suppliers bar, pooling-rate donut;
+      plus suppliers table + recent-orders table. Stats + revenue already on the dashboard.
+- [x] VERIFIED: ON_THE_WAY order shows "Live tracking"; admin renders all charts/tables (200).
 
 ## Phase 9 — Ship
 - [ ] README with local + deploy steps

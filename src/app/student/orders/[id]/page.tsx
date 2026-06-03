@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle, Users } from "lucide-react";
+import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle, Users, Navigation } from "lucide-react";
+import { DeliveryTracker } from "@/components/delivery-tracker";
 import { Badge } from "@/components/ui/badge";
 import { DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
 import { currentUser } from "@/lib/session";
@@ -63,6 +64,23 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           <StatusTimeline status={order.status} />
         </CardContent>
       </Card>
+
+      {order.status === "ON_THE_WAY" && (
+        <Card className="reveal mt-4 overflow-hidden" style={{ animationDelay: "100ms" }}>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Navigation className="h-5 w-5 text-primary" /> Live tracking
+            </CardTitle>
+            <Badge variant="muted">Simulated</Badge>
+          </CardHeader>
+          <CardContent>
+            <DeliveryTracker
+              lat={order.hostel.lat ?? 5.1131}
+              lng={order.hostel.lng ?? -1.2912}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="reveal mt-4" style={{ animationDelay: "140ms" }}>
         <CardHeader>
