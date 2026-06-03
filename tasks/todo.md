@@ -84,9 +84,30 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
 - [x] VERIFIED: ON_THE_WAY order shows "Live tracking"; admin renders all charts/tables (200).
 
 ## Phase 9 — Ship
-- [ ] README with local + deploy steps
-- [ ] Deploy to Vercel + Neon; seed prod; verify public URL end-to-end
-- [ ] Fill the Review section below
+- [x] README with overview, 3 differentiators, env table, seeded logins, demo path, deploy steps.
+- [x] Deploy-ready: build runs `prisma generate && next build`; `postinstall` generates client;
+      `db:deploy` script for prod migrate. Vercel + Paystack-webhook steps documented.
+- [~] Actual Vercel deploy + prod seed + public-URL check — **needs the user's Vercel login**
+      (can't auth on their behalf). Everything else is prepared.
+- [x] Review section filled below.
 
 ## Review
-_TBD — summarize what was built, what's mocked, known gaps._
+
+**Built (Phases 0–8, all verified via curl + builds, committed per phase):**
+- Scaffold, Neon+Prisma schema/migration, idempotent seed.
+- Auth (NextAuth credentials/JWT, 3 roles) + middleware role-gating; student self-registration.
+- Order lifecycle with a single-source-of-truth status machine + role guards; pricing; history; rating.
+- **Differentiator 1 — prediction:** burn-rate engine, gas-gauge, consumption curve.
+- **Differentiator 2 — trust:** VERIFYING step, supplier weight + proof photo, student confirm/dispute,
+  admin dispute surfacing.
+- **Differentiator 3 — pooling:** same-supplier/same-block auto-pool within 90 min, re-priced delivery
+  fee, savings banner, supplier multi-stop flag.
+- Live services: Resend/mNotify/Paystack wrappers, ServiceLog audit, graceful degradation,
+  Paystack init+webhook+callback, notifications on status changes.
+- Simulated Leaflet tracking; admin Recharts reports + tables + service audit panel.
+
+**Mocked:** delivery tracking only (rider marker is simulated; real fleet GPS needs devices).
+
+**Known gaps / next:** final Vercel deploy pending the user's login; SMS only sends if a real
+mNotify key is set (degrades gracefully otherwise); proof photos stored as small data URLs
+(fine for the demo; object storage would be the production choice).
