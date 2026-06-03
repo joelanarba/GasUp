@@ -27,10 +27,18 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
 - [x] **CHECKPOINT: dev server runs; logged in as all 3 roles + new registration, routing proven. Awaiting sign-off.**
 
 ## Phase 3 — Order lifecycle
-- [ ] Student: place order (hostel/block/room, cylinder size, instructions) → fee computed
-- [ ] Status machine: PENDING→ACCEPTED→VERIFYING→ON_THE_WAY→DELIVERED→COMPLETED (+CANCELLED/DISPUTED)
-- [ ] Supplier: see incoming, accept/reject, advance status
-- [ ] Order history for student
+- [x] Student: place order (size + supplier pick, room from profile, instructions) → fee computed
+      (kg×pricePerKg + GHS10 delivery; verified 6kg×14+10=94). POST /api/orders.
+- [x] Status machine in `src/lib/order-status.ts` (single source of truth + role guards).
+      Phase-3 path PENDING→ACCEPTED→ON_THE_WAY→DELIVERED→COMPLETED (+CANCELLED). VERIFYING/DISPUTED
+      reserved for Phase 5 (the transition map already knows them). deliveredAt set on DELIVERED.
+- [x] Supplier: incoming queue + accept/reject + advance (PATCH /api/orders/[id], ownership-checked).
+- [x] Order history for student (list + detail w/ status timeline) + rating on COMPLETED
+      (POST /api/orders/[id]/review, updates supplier ratingAvg/Count).
+- [x] VERIFIED via curl: full lifecycle place→accept→advance→advance→complete→rate; guards
+      (cross-role action 409, cross-supplier 403, duplicate review 409); all pages 200; build clean.
+
+> Deferred to their phases: VERIFYING/weight (Phase 5), Paystack payment (Phase 7 — orders are UNPAID now).
 
 ## Phase 4 — Differentiator 1: Predictive refill
 - [ ] Burn-rate calc: from a student's delivered orders, compute avg days-between-refills;

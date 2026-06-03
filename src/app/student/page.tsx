@@ -1,14 +1,23 @@
-import { getServerSession } from "next-auth";
-import { Gauge, ShoppingBag, History, Sparkles } from "lucide-react";
-import { authOptions } from "@/lib/auth";
+import Link from "next/link";
+import { Gauge, ShoppingBag, History, Sparkles, ChevronRight } from "lucide-react";
+import { currentUser } from "@/lib/session";
+import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { OrderStatusBadge } from "@/components/order-status-badge";
+import { cylinderLabel } from "@/lib/cylinders";
 
 export default async function StudentDashboard() {
-  const session = await getServerSession(authOptions);
-  const name = session?.user?.name ?? "there";
+  const user = await currentUser();
+  const name = user?.name ?? "there";
+
+  const activeOrder = await prisma.order.findFirst({
+    where: { studentId: user!.id, status: { notIn: ["COMPLETED", "CANCELLED", "DISPUTED"] } },
+    include: { supplier: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <DashboardShell role="STUDENT" name={name}>
@@ -40,20 +49,39 @@ export default async function StudentDashboard() {
         </CardContent>
       </Card>
 
+      {activeOrder && (
+        <Link
+          href={`/student/orders/${activeOrder.id}`}
+          className="reveal mt-4 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-4 shadow-warm transition-colors hover:border-primary/50"
+          style={{ animationDelay: "180ms" }}
+        >
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Active order</p>
+            <p className="font-semibold">{cylinderLabel(activeOrder.cylinderSize)} · {activeOrder.supplier?.businessName ?? "Finding supplier"}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <OrderStatusBadge status={activeOrder.status} />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </Link>
+      )}
+
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Card className="reveal" style={{ animationDelay: "200ms" }}>
+        <Card className="reveal" style={{ animationDelay: "240ms" }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <ShoppingBag className="h-5 w-5 text-primary" /> Order a refill
             </CardTitle>
-            <CardDescription>Pick a size, pay, track to your door.</CardDescription>
+            <CardDescription>Pick a size, choose a supplier, track to your door.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled className="w-full">Coming in Phase 3</Button>
+            <Button asChild className="w-full">
+              <Link href="/student/order">Start an order</Link>
+            </Button>
           </CardContent>
         </Card>
 
-        <Card className="reveal" style={{ animationDelay: "260ms" }}>
+        <Card className="reveal" style={{ animationDelay: "300ms" }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <History className="h-5 w-5 text-primary" /> Refill history
@@ -61,7 +89,9 @@ export default async function StudentDashboard() {
             <CardDescription>Past deliveries and ratings.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Your delivered orders will appear here.</p>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/student/orders">View orders</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
