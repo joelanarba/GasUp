@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck, Activity } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -10,7 +10,7 @@ export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const name = session?.user?.name ?? "Admin";
 
-  const [students, suppliers, orders, paid, disputes] = await Promise.all([
+  const [students, suppliers, orders, paid, disputes, logs] = await Promise.all([
     prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.supplier.count(),
     prisma.order.count(),
@@ -20,6 +20,7 @@ export default async function AdminDashboard() {
       include: { student: true, supplier: true, hostel: true },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.serviceLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
 
   const stats = [
@@ -101,6 +102,37 @@ export default async function AdminDashboard() {
               Order volume, completion rate, top suppliers, revenue and pooling rate — rendered with Recharts.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="reveal mt-4" style={{ animationDelay: "460ms" }}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" /> Service activity
+          </CardTitle>
+          <CardDescription>Audit trail of external calls (email · SMS · payments).</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No external calls logged yet.</p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {logs.map((l) => (
+                <li key={l.id} className="flex items-center justify-between gap-3 py-2">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`h-2 w-2 rounded-full ${l.success ? "bg-success" : "bg-destructive"}`}
+                    />
+                    <span className="font-medium uppercase">{l.service}</span>
+                    <span className="text-muted-foreground">{l.action}</span>
+                  </span>
+                  <span className="max-w-[55%] truncate text-right text-muted-foreground">
+                    {l.detail}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </DashboardShell>

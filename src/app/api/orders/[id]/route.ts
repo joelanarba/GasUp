@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 import { transition, type OrderAction } from "@/lib/order-status";
+import { notifyOrderEvent } from "@/lib/services/notifications";
 
 const schema = z.object({
   action: z.enum(["accept", "reject", "confirm", "dispute", "advance", "cancel", "complete"]),
@@ -50,6 +51,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       ...(result.toStatus === "DELIVERED" ? { deliveredAt: new Date() } : {}),
     },
   });
+
+  const eventFor: Partial<Record<typeof updated.status, "accepted" | "on_the_way" | "delivered">> = {
+    ACCEPTED: "accepted",
+    ON_THE_WAY: "on_the_way",
+    DELIVERED: "delivered",
+  };
+  const evt = eventFor[updated.status];
+  if (evt) await notifyOrderEvent(evt, updated.id);
 
   return NextResponse.json({ id: updated.id, status: updated.status });
 }

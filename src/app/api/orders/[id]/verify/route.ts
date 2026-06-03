@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@/lib/session";
+import { notifyOrderEvent } from "@/lib/services/notifications";
 
 // Proof is stored inline as a data URL (kept small) so the demo needs no object
 // storage and stays deploy-safe on Vercel's read-only filesystem.
@@ -54,6 +55,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       status: "VERIFYING",
     },
   });
+
+  await notifyOrderEvent("verifying", updated.id);
 
   return NextResponse.json({ id: updated.id, status: updated.status });
 }

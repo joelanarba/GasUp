@@ -11,6 +11,7 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { StatusTimeline } from "@/components/status-timeline";
 import { OrderActions } from "@/components/order-actions";
 import { ReviewForm } from "@/components/review-form";
+import { PayButton } from "@/components/pay-button";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 
@@ -76,10 +77,27 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
             icon
           />
           {order.specialInstructions && <Row label="Notes" value={order.specialInstructions} />}
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Payment</span>
+            {order.paymentStatus === "PAID" ? (
+              <Badge variant="success">Paid</Badge>
+            ) : order.paymentStatus === "PENDING" ? (
+              <Badge variant="accent">Awaiting confirmation</Badge>
+            ) : (
+              <Badge variant="muted">Unpaid</Badge>
+            )}
+          </div>
           <div className="flex justify-between border-t border-border pt-3 font-display text-lg font-semibold">
             <span>Total</span>
             <span>{formatGhs(order.feeGhs)}</span>
           </div>
+          {order.paymentStatus !== "PAID" &&
+            order.status !== "CANCELLED" &&
+            order.status !== "COMPLETED" && (
+              <div className="pt-1">
+                <PayButton orderId={order.id} amountLabel={formatGhs(order.feeGhs)} />
+              </div>
+            )}
         </CardContent>
       </Card>
 

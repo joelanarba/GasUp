@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/session";
 import { kgFor } from "@/lib/cylinders";
 import { computeFee } from "@/lib/pricing";
 import { poolOrder } from "@/lib/pooling";
+import { notifyOrderEvent } from "@/lib/services/notifications";
 
 const schema = z.object({
   supplierId: z.string().min(1, "Choose a supplier"),
@@ -65,6 +66,8 @@ export async function POST(req: Request) {
 
   // Auto-pool with same-supplier, same-block PENDING orders in the time window.
   const pool = await poolOrder(order.id);
+
+  await notifyOrderEvent("placed", order.id);
 
   return NextResponse.json(
     { id: order.id, pooled: pool.pooled, savings: pool.pooled ? pool.savings : 0 },

@@ -66,9 +66,15 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
       different hostel+supplier order stays solo (109). Seed: kofi shares Akua's block for the demo.
 
 ## Phase 7 — Live services (wrappers + audit)
-- [ ] `lib/services/email.ts` (Resend), `sms.ts` (mNotify), `payments.ts` (Paystack test)
-- [ ] Paystack init + verify webhook; order.paymentStatus transitions
-- [ ] Notifications fire on key status changes; all logged to ServiceLog; graceful failure
+- [x] `lib/services/{log,email(Resend),sms(mNotify),payments(Paystack)}.ts` — every call
+      wrapped, audited to ServiceLog, and degrades gracefully (never throws into the flow).
+- [x] Paystack init (/api/orders/[id]/pay) + verify webhook (HMAC SHA512 sig check) +
+      /payment/callback reconcile; paymentStatus UNPAID→PENDING→PAID. PayButton on order detail.
+- [x] Notifications fire on placed/accepted/verifying/on_the_way/delivered → email + SMS; all
+      logged. Admin "Service activity" panel shows the audit trail.
+- [x] VERIFIED on a clean single dev server: order still places (201) despite SMS placeholder;
+      Paystack init returned a real checkout URL; webhook bad-sig → 401; audit trail populated
+      (resend/mnotify/paystack rows). See lessons.md re: dev-server / .next / Neon pitfalls.
 
 ## Phase 8 — Tracking sim + admin reports
 - [ ] Leaflet map animating rider marker hostel→station→hostel (simulated)
