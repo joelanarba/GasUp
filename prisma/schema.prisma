@@ -1,0 +1,160 @@
+// GasUp data model.
+// Designed around the three differentiators:
+//   - Refill history (filledKg + deliveredAt) → prediction engine
+//   - Order.verifiedWeightKg + status VERIFYING → trust layer
+//   - Pool + Order.poolId → pooled hostel refills
+// These are relational/aggregate workloads → why Postgres, not Firestore.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  SUPPLIER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING      // placed, awaiting supplier
+  ACCEPTED     // supplier took it
+  VERIFYING    // supplier uploaded fill weight, awaiting student confirm
+  ON_THE_WAY   // confirmed + en route
+  DELIVERED    // dropped off
+  COMPLETED    // student closed + (optionally) rated
+  CANCELLED
+  DISPUTED     // weight mismatch flagged
+}
+
+enum CylinderSize {
+  KG_3
+  KG_6
+  KG_12_5
+  KG_14_5
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  fullName     String
+  role         Role      @default(STUDENT)
+  createdAt    DateTime  @default(now())
+
+  // student fields
+  hostelId     String?
+  hostel       Hostel?   @relation(fields: [hostelId], references: [id])
+  roomNumber   String?
+  householdSize Int      @default(1) // seeds the burn-rate model
+
+  // supplier profile (1:1) if role == SUPPLIER
+  supplier     Supplier?
+
+  orders       Order[]   @relation("StudentOrders")
+  reviews      Review[]
+}
+
+model Hostel {
+  id        String  @id @default(cuid())
+  name      String
+  block     String  // pooling groups by (hostelId, block)
+  campus    String
+  lat       Float?
+  lng       Float?
+  users     User[]
+  orders    Order[]
+
+  @@unique([name, block])
+}
+
+model Supplier {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  businessName    String
+  vehicleType     String   // Motorbike / Tricycle / Vehicle
+  coverageArea    String
+  availability    String   @default("AVAILABLE") // AVAILABLE / BUSY / OFFLINE
+  ratingAvg       Float    @default(0)
+  ratingCount     Int      @default(0)
+  pricePerKg      Float    @default(15) // GHS, transparent pricing
+  orders          Order[]
+}
+
+model Order {
+  id              String       @id @default(cuid())
+  student         User         @relation("StudentOrders", fields: [studentId], references: [id])
+  studentId       String
+  supplier        Supplier?    @relation(fields: [supplierId], references: [id])
+  supplierId      String?
+  hostel          Hostel       @relation(fields: [hostelId], references: [id])
+  hostelId        String
+  roomNumber      String
+
+  cylinderSize    CylinderSize
+  requestedKg     Float
+  status          OrderStatus  @default(PENDING)
+
+  // trust layer
+  verifiedWeightKg Float?      // what supplier says they filled
+  weightConfirmed  Boolean     @default(false) // student confirmed match
+  proofUrl         String?     // weighbridge/scale photo
+
+  // pooling
+  poolId          String?
+  pool            Pool?        @relation(fields: [poolId], references: [id])
+  feeGhs          Float        // pooled orders get a discounted fee
+
+  // payment
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paystackRef     String?
+
+  specialInstructions String?
+  createdAt       DateTime     @default(now())
+  deliveredAt     DateTime?    // feeds prediction (days-between-refills)
+
+  review          Review?
+}
+
+model Pool {
+  id        String   @id @default(cuid())
+  hostelId  String
+  block     String
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String   @unique
+  student     User     @relation(fields: [studentId], references: [id])
+  studentId   String
+  supplierId  String
+  rating      Int      // 1-5
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+// Audit trail for live external services (mNotify / Resend / Paystack)
+model ServiceLog {
+  id        String   @id @default(cuid())
+  service   String   // "mnotify" | "resend" | "paystack"
+  action    String
+  success   Boolean
+  detail    String?
+  createdAt DateTime @default(now())
+}
