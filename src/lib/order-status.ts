@@ -1,6 +1,14 @@
 import { type OrderStatus, type Role } from "@prisma/client";
 
-export type OrderAction = "accept" | "reject" | "advance" | "cancel" | "complete";
+export type OrderAction =
+  | "accept"
+  | "reject"
+  | "verify"
+  | "confirm"
+  | "dispute"
+  | "advance"
+  | "cancel"
+  | "complete";
 
 type BadgeTone = "default" | "accent" | "muted" | "success" | "outline" | "destructive";
 
@@ -16,10 +24,10 @@ export const STATUS_META: Record<OrderStatus, { label: string; tone: BadgeTone; 
 };
 
 // Happy-path progress steps for the timeline UI.
-// (VERIFYING slots between ACCEPTED and ON_THE_WAY once the trust layer lands in Phase 5.)
 export const ORDER_TIMELINE: OrderStatus[] = [
   "PENDING",
   "ACCEPTED",
+  "VERIFYING",
   "ON_THE_WAY",
   "DELIVERED",
   "COMPLETED",
@@ -47,9 +55,18 @@ export function transition(
     case "reject":
       if (role !== "SUPPLIER") return deny();
       return current === "PENDING" ? { ok: true, toStatus: "CANCELLED" } : deny();
+    case "verify":
+      // Supplier submits the filled weight + proof — trust gate.
+      if (role !== "SUPPLIER") return deny();
+      return current === "ACCEPTED" ? { ok: true, toStatus: "VERIFYING" } : deny();
+    case "confirm":
+      if (role !== "STUDENT") return deny();
+      return current === "VERIFYING" ? { ok: true, toStatus: "ON_THE_WAY" } : deny();
+    case "dispute":
+      if (role !== "STUDENT") return deny();
+      return current === "VERIFYING" ? { ok: true, toStatus: "DISPUTED" } : deny();
     case "advance":
       if (role !== "SUPPLIER") return deny();
-      if (current === "ACCEPTED") return { ok: true, toStatus: "ON_THE_WAY" };
       if (current === "ON_THE_WAY") return { ok: true, toStatus: "DELIVERED" };
       return deny();
     case "cancel":
@@ -76,14 +93,18 @@ export function availableActions(
         { action: "accept", label: "Accept", variant: "default" },
         { action: "reject", label: "Decline", variant: "outline" },
       ];
-    if (status === "ACCEPTED")
-      return [{ action: "advance", label: "Start delivery", variant: "default" }];
+    // ACCEPTED → handled by the verify-fill form (needs weight + photo), not a plain button.
     if (status === "ON_THE_WAY")
       return [{ action: "advance", label: "Mark delivered", variant: "default" }];
   }
   if (role === "STUDENT") {
     if (status === "PENDING" || status === "ACCEPTED")
       return [{ action: "cancel", label: "Cancel order", variant: "outline" }];
+    if (status === "VERIFYING")
+      return [
+        { action: "confirm", label: "Weight matches — confirm", variant: "default" },
+        { action: "dispute", label: "Report mismatch", variant: "destructive" },
+      ];
     if (status === "DELIVERED")
       return [{ action: "complete", label: "Confirm received", variant: "default" }];
   }

@@ -1,19 +1,25 @@
 import { getServerSession } from "next-auth";
-import { Users, Store, Package, BarChart3 } from "lucide-react";
+import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { cylinderLabel } from "@/lib/cylinders";
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const name = session?.user?.name ?? "Admin";
 
-  const [students, suppliers, orders, paid] = await Promise.all([
+  const [students, suppliers, orders, paid, disputes] = await Promise.all([
     prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.supplier.count(),
     prisma.order.count(),
     prisma.order.aggregate({ where: { paymentStatus: "PAID" }, _sum: { feeGhs: true } }),
+    prisma.order.findMany({
+      where: { status: "DISPUTED" },
+      include: { student: true, supplier: true, hostel: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const stats = [
@@ -42,7 +48,46 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <Card className="reveal mt-6" style={{ animationDelay: "360ms" }}>
+      <Card className="reveal mt-6" style={{ animationDelay: "340ms" }}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {disputes.length > 0 ? (
+              <ShieldAlert className="h-5 w-5 text-destructive" />
+            ) : (
+              <ShieldCheck className="h-5 w-5 text-success" />
+            )}
+            Trust &amp; disputes
+          </CardTitle>
+          <CardDescription>Weight-mismatch flags raised by students on delivery.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {disputes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No disputes — verified fills are holding up.</p>
+          ) : (
+            <ul className="space-y-2">
+              {disputes.map((d) => (
+                <li
+                  key={d.id}
+                  className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {d.student.fullName} · {cylinderLabel(d.cylinderSize)}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {d.supplier?.businessName ?? "—"} · ordered {d.requestedKg}kg, filled{" "}
+                      {d.verifiedWeightKg ?? "?"}kg
+                    </p>
+                  </div>
+                  <span className="font-display font-semibold text-destructive">Disputed</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="reveal mt-4" style={{ animationDelay: "400ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" /> Reports

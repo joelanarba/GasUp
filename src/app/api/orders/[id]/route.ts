@@ -5,7 +5,7 @@ import { currentUser } from "@/lib/session";
 import { transition, type OrderAction } from "@/lib/order-status";
 
 const schema = z.object({
-  action: z.enum(["accept", "reject", "advance", "cancel", "complete"]),
+  action: z.enum(["accept", "reject", "confirm", "dispute", "advance", "cancel", "complete"]),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -44,6 +44,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     where: { id: order.id },
     data: {
       status: result.toStatus,
+      // Student confirmed the filled weight matched on delivery.
+      ...(action === "confirm" ? { weightConfirmed: true } : {}),
       // deliveredAt feeds the prediction engine (days-between-refills).
       ...(result.toStatus === "DELIVERED" ? { deliveredAt: new Date() } : {}),
     },

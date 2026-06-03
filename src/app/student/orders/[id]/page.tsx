@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -64,8 +65,45 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
         </CardContent>
       </Card>
 
+      {order.verifiedWeightKg != null && (
+        <Card className="reveal mt-4" style={{ animationDelay: "180ms" }}>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ShieldCheck className="h-5 w-5 text-accent" /> Verified fill
+            </CardTitle>
+            {order.status === "DISPUTED" ? (
+              <Badge variant="destructive">Disputed</Badge>
+            ) : order.weightConfirmed ? (
+              <Badge variant="success">Confirmed</Badge>
+            ) : (
+              <Badge variant="accent">Awaiting your check</Badge>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Ordered</span>
+              <span className="font-medium">{order.requestedKg} kg</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Supplier filled</span>
+              <span className="font-display text-lg font-semibold">{order.verifiedWeightKg} kg</span>
+            </div>
+            {order.proofUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={order.proofUrl} alt="Fill proof" className="w-full rounded-md border border-border" />
+            )}
+            {order.status === "VERIFYING" && (
+              <p className="flex items-start gap-2 rounded-md bg-accent/10 px-3 py-2 text-accent-foreground">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                Check the cylinder weight on the scale. Confirm if it matches, or report a mismatch to raise a dispute.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
-        <div className="reveal mt-4" style={{ animationDelay: "200ms" }}>
+        <div className="reveal mt-4" style={{ animationDelay: "240ms" }}>
           <OrderActions orderId={order.id} role="STUDENT" status={order.status} />
         </div>
       )}

@@ -47,9 +47,14 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
 - [x] Recharts consumption curve (Area) with a "today" reference line. Build clean; pages 200.
 
 ## Phase 5 — Differentiator 2: Verified-fill trust
-- [ ] Supplier uploads filled kg + proof image at VERIFYING step
-- [ ] Student confirms weight matches → ON_THE_WAY; mismatch → DISPUTED
-- [ ] Trust badge / dispute surfaced to admin
+- [x] Status machine now inserts VERIFYING (ACCEPTED→VERIFYING→ON_THE_WAY). Supplier submits
+      filled kg + optional downscaled proof photo via POST /api/orders/[id]/verify (stored as
+      a small data URL — deploy-safe, no object storage).
+- [x] Student confirms (→ON_THE_WAY, weightConfirmed=true) or reports mismatch (→DISPUTED)
+      on the order detail; verified-fill panel shows ordered-vs-filled + photo.
+- [x] Disputes surfaced on the admin dashboard (Trust & disputes card) + Confirmed/Awaiting/Disputed badges.
+- [x] VERIFIED via curl: verify→confirm→complete (proof stored) and verify→dispute→DISPUTED;
+      guards (confirm-before-verify, verify-when-not-ACCEPTED). Build clean; admin shows dispute.
 
 ## Phase 6 — Differentiator 3: Pooled refills
 - [ ] On new PENDING order, find other PENDING in same (hostel, block) within window

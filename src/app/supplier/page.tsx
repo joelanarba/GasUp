@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrderActions } from "@/components/order-actions";
+import { VerifyFillForm } from "@/components/verify-fill-form";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 import { type Prisma } from "@prisma/client";
@@ -26,7 +27,10 @@ export default async function SupplierDashboard() {
   }
 
   const orders = await prisma.order.findMany({
-    where: { supplierId: supplier.id, status: { in: ["PENDING", "ACCEPTED", "ON_THE_WAY"] } },
+    where: {
+      supplierId: supplier.id,
+      status: { in: ["PENDING", "ACCEPTED", "VERIFYING", "ON_THE_WAY"] },
+    },
     include: { student: true, hostel: true },
     orderBy: { createdAt: "asc" },
   });
@@ -112,7 +116,15 @@ function SupplierOrderCard({ order }: { order: QueueOrder }) {
         {order.specialInstructions && (
           <p className="rounded-md bg-muted/50 px-3 py-2 text-sm">{order.specialInstructions}</p>
         )}
-        <OrderActions orderId={order.id} role="SUPPLIER" status={order.status} />
+        {order.status === "ACCEPTED" ? (
+          <VerifyFillForm orderId={order.id} requestedKg={order.requestedKg} />
+        ) : order.status === "VERIFYING" ? (
+          <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-foreground">
+            Sent {order.verifiedWeightKg} kg to {order.student.fullName.split(" ")[0]} — waiting for them to confirm.
+          </p>
+        ) : (
+          <OrderActions orderId={order.id} role="SUPPLIER" status={order.status} />
+        )}
       </CardContent>
     </Card>
   );
