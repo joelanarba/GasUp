@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -19,9 +20,16 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
 
   const order = await prisma.order.findUnique({
     where: { id: params.id },
-    include: { supplier: true, hostel: true, review: true },
+    include: {
+      supplier: true,
+      hostel: true,
+      review: true,
+      pool: { include: { _count: { select: { orders: true } } } },
+    },
   });
   if (!order || order.studentId !== user!.id) notFound();
+
+  const poolSize = order.pool?._count.orders ?? 0;
 
   return (
     <DashboardShell role="STUDENT" name={name}>
@@ -38,6 +46,16 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
         </h1>
         <OrderStatusBadge status={order.status} />
       </div>
+
+      {poolSize > 1 && (
+        <div className="reveal mt-4 flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 p-4" style={{ animationDelay: "30ms" }}>
+          <Users className="h-5 w-5 text-success" />
+          <p className="text-sm">
+            <span className="font-semibold text-success">Pooled with {poolSize - 1} neighbour{poolSize - 1 > 1 ? "s" : ""}.</span>{" "}
+            One rider trip to Block {order.hostel.block} — you saved {formatGhs(DELIVERY_FEE_SOLO - DELIVERY_FEE_POOLED)} on delivery.
+          </p>
+        </div>
+      )}
 
       <Card className="reveal mt-6" style={{ animationDelay: "60ms" }}>
         <CardContent className="p-6">

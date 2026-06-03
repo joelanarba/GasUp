@@ -138,7 +138,8 @@ async function main() {
   //     on day one. orderHistory = [daysAgo,...] (most recent last). ---
   const studentSpecs = [
     { email: "akua@gasup.app", fullName: "Akua Sarpong", householdSize: 1, hostelIdx: 0, room: "A12", size: CylinderSize.KG_6, history: [44, 22] },
-    { email: "kofi@gasup.app", fullName: "Kofi Annan", householdSize: 2, hostelIdx: 1, room: "A07", size: CylinderSize.KG_6, history: [30, 12] },
+    // kofi shares Akua's hostel block (idx 0) so same-block pooling can be demoed.
+    { email: "kofi@gasup.app", fullName: "Kofi Annan", householdSize: 2, hostelIdx: 0, room: "A07", size: CylinderSize.KG_6, history: [30, 12] },
     { email: "esi@gasup.app", fullName: "Esi Bonsu", householdSize: 3, hostelIdx: 2, room: "B03", size: CylinderSize.KG_12_5, history: [50, 20] },
     { email: "nana@gasup.app", fullName: "Nana Adjei", householdSize: 1, hostelIdx: 3, room: "B15", size: CylinderSize.KG_6, history: [16] },
     { email: "yaa@gasup.app", fullName: "Yaa Asantewaa", householdSize: 4, hostelIdx: 4, room: "A21", size: CylinderSize.KG_14_5, history: [38, 14] },

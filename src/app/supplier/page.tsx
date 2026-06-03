@@ -1,4 +1,4 @@
-import { Inbox, Truck, Star, MapPin } from "lucide-react";
+import { Inbox, Truck, Star, MapPin, Users } from "lucide-react";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -11,7 +11,9 @@ import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 import { type Prisma } from "@prisma/client";
 
-type QueueOrder = Prisma.OrderGetPayload<{ include: { student: true; hostel: true } }>;
+type QueueOrder = Prisma.OrderGetPayload<{
+  include: { student: true; hostel: true; pool: { include: { _count: { select: { orders: true } } } } };
+}>;
 
 export default async function SupplierDashboard() {
   const user = await currentUser();
@@ -31,7 +33,11 @@ export default async function SupplierDashboard() {
       supplierId: supplier.id,
       status: { in: ["PENDING", "ACCEPTED", "VERIFYING", "ON_THE_WAY"] },
     },
-    include: { student: true, hostel: true },
+    include: {
+      student: true,
+      hostel: true,
+      pool: { include: { _count: { select: { orders: true } } } },
+    },
     orderBy: { createdAt: "asc" },
   });
   const incoming = orders.filter((o) => o.status === "PENDING");
@@ -106,7 +112,14 @@ function SupplierOrderCard({ order }: { order: QueueOrder }) {
           </CardTitle>
           <CardDescription>{order.student.fullName}</CardDescription>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex flex-col items-end gap-1">
+          <OrderStatusBadge status={order.status} />
+          {order.pool && order.pool._count.orders > 1 && (
+            <Badge variant="accent">
+              <Users className="h-3 w-3" /> Pooled · {order.pool._count.orders} stops
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">

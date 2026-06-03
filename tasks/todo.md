@@ -57,9 +57,13 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
       guards (confirm-before-verify, verify-when-not-ACCEPTED). Build clean; admin shows dispute.
 
 ## Phase 6 — Differentiator 3: Pooled refills
-- [ ] On new PENDING order, find other PENDING in same (hostel, block) within window
-- [ ] Create/join Pool, apply discounted feeGhs, show pooled savings to student
-- [ ] Supplier sees pool as one multi-stop trip
+- [x] On new PENDING order, `src/lib/pooling.ts` finds same-supplier + same-hostel-block
+      PENDING orders within a 90-min window.
+- [x] Create/join Pool, re-price ALL pool members to the pooled delivery fee (GHS 5 vs 10),
+      show pooled-savings banner on the student order detail.
+- [x] Supplier sees pooled orders flagged "Pooled · N stops" (one multi-stop trip).
+- [x] VERIFIED via curl: 2nd same-block order auto-pools (both re-priced 94→89, 2 stops);
+      different hostel+supplier order stays solo (109). Seed: kofi shares Akua's block for the demo.
 
 ## Phase 7 — Live services (wrappers + audit)
 - [ ] `lib/services/email.ts` (Resend), `sms.ts` (mNotify), `payments.ts` (Paystack test)
