@@ -144,9 +144,13 @@ phase markers). `tsc --noEmit` clean; live server pages 200; auth gating 307→/
 - [x] **Supplier CTA fix:** landing "Become a supplier" pointed at `/register` (students only →
       silently made a student account). Now "Partner with us" (mailto), matching admin onboarding.
 - [x] **Footer year** made dynamic.
-- [ ] **CRITICAL — DB schema drift (needs decision):** the Neon DB is on `init`+`add_express`
-      (old hostel/room model); the code + `schema.prisma` use the address+lat/lng model with no
-      migration for the refactor. Fresh Prisma client → `P2022`. Fix: generate the missing migration
-      + reset/reseed the DB (destructive on demo data) so the deployed app's student/order/pooling
-      flows work. Pending user approval (shared/prod DB).
+- [x] **CRITICAL — DB schema drift (FIXED):** the Neon DB was stuck on `init`+`add_express`
+      (old hostel/room model) while the code + `schema.prisma` use the address+lat/lng model — the
+      refactor was never migrated, so a fresh Prisma client threw `P2022` (the running dev server
+      masked it with a stale in-memory client). Generated `20260604174717_location_refactor`
+      (drops Hostel + hostelId/roomNumber/block, adds address/lat/lng + defaultAddress/lat/lng),
+      reset + reseeded the shared DB (user-approved), restarted the dev server fresh. VERIFIED:
+      all three role dashboards now load 200 under auth (`/student` `/student/order` `/student/orders`
+      `/supplier` `/admin`) where they previously 500'd. Migration committed so `migrate deploy`
+      reproduces it on Vercel.
 - [ ] (optional) Admin dispute resolution action; supplier availability toggle; pitch-deck artifact.
