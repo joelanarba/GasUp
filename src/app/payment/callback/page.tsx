@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { verifyPayment } from "@/lib/services/payments";
 import { Button } from "@/components/ui/button";
@@ -27,24 +27,28 @@ export default async function PaymentCallback({
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-5 text-center">
       <Brand />
-      <div className="mt-10">
+      <div className="reveal mt-12" style={{ animationDelay: "100ms" }}>
         {paid ? (
-          <CheckCircle2 className="mx-auto h-16 w-16 text-success" />
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-success/12">
+            <CheckCircle2 className="h-10 w-10 text-success" />
+          </span>
         ) : (
-          <XCircle className="mx-auto h-16 w-16 text-destructive" />
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-destructive/10">
+            <XCircle className="h-10 w-10 text-destructive" />
+          </span>
         )}
-        <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight">
+        <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight">
           {paid ? "Payment confirmed" : "Payment not confirmed"}
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-3 max-w-xs text-muted-foreground">
           {paid
             ? "Thanks! Your refill is paid and on its way through the queue."
             : "We couldn't confirm this payment. If you were charged, it'll reconcile shortly."}
         </p>
       </div>
-      <Button asChild size="lg" className="mt-8">
+      <Button asChild size="lg" className="reveal mt-8" style={{ animationDelay: "250ms" }}>
         <Link href={orderId ? `/student/orders/${orderId}` : "/student"}>
-          {orderId ? "View your order" : "Back to dashboard"}
+          {orderId ? "View your order" : "Back to dashboard"} <ArrowRight className="h-4 w-4" />
         </Link>
       </Button>
     </main>

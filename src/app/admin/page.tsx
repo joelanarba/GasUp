@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
       prisma.order.aggregate({ where: { paymentStatus: "PAID" }, _sum: { feeGhs: true } }),
       prisma.order.findMany({
         where: { status: "DISPUTED" },
-        include: { student: true, supplier: true, hostel: true },
+        include: { student: true, supplier: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.serviceLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
@@ -70,17 +70,20 @@ export default async function AdminDashboard() {
   return (
     <DashboardShell role="ADMIN" name={name}>
       <div className="reveal" style={{ animationDelay: "40ms" }}>
-        <p className="text-sm font-medium text-muted-foreground">Admin console</p>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Overview</h1>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Admin console</p>
+        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Overview</h1>
       </div>
 
+      {/* ─── Stats grid ─── */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s, i) => (
-          <Card key={s.label} className="reveal" style={{ animationDelay: `${100 + i * 60}ms` }}>
+          <Card key={s.label} className="reveal hover-lift" style={{ animationDelay: `${100 + i * 60}ms` }}>
             <CardContent className="p-5">
-              <s.icon className="h-5 w-5 text-primary" />
-              <p className="mt-3 font-display text-3xl font-semibold tracking-tight">{s.value}</p>
-              <p className="text-sm text-muted-foreground">{s.label}</p>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10">
+                <s.icon className="h-5 w-5 text-primary" />
+              </span>
+              <p className="mt-4 font-display text-3xl font-semibold tracking-tight">{s.value}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{s.label}</p>
             </CardContent>
           </Card>
         ))}
@@ -88,13 +91,18 @@ export default async function AdminDashboard() {
 
       {impact.pooledOrders > 0 && <ImpactCard impact={impact} style={{ animationDelay: "320ms" }} />}
 
+      {/* ─── Trust & disputes ─── */}
       <Card className="reveal mt-6" style={{ animationDelay: "340ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {disputes.length > 0 ? (
-              <ShieldAlert className="h-5 w-5 text-destructive" />
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-destructive/10">
+                <ShieldAlert className="h-4 w-4 text-destructive" />
+              </span>
             ) : (
-              <ShieldCheck className="h-5 w-5 text-success" />
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-success/12">
+                <ShieldCheck className="h-4 w-4 text-success" />
+              </span>
             )}
             Trust &amp; disputes
           </CardTitle>
@@ -108,7 +116,7 @@ export default async function AdminDashboard() {
               {disputes.map((d) => (
                 <li
                   key={d.id}
-                  className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+                  className="flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3.5 text-sm"
                 >
                   <div>
                     <p className="font-medium">
@@ -127,21 +135,25 @@ export default async function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* ─── Reports ─── */}
       <Card className="reveal mt-4" style={{ animationDelay: "400ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" /> Reports
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </span>
+            Reports
           </CardTitle>
           <CardDescription>Order volume, top suppliers, and pooling rate.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
-            <p className="mb-2 text-sm font-semibold text-muted-foreground">Orders by status</p>
+            <p className="mb-3 text-sm font-semibold text-muted-foreground">Orders by status</p>
             <OrdersByStatusChart data={statusData} />
           </div>
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-sm font-semibold text-muted-foreground">Top suppliers (deliveries)</p>
+              <p className="mb-3 text-sm font-semibold text-muted-foreground">Top suppliers (deliveries)</p>
               {supplierData.length > 0 ? (
                 <TopSuppliersChart data={supplierData} />
               ) : (
@@ -149,45 +161,49 @@ export default async function AdminDashboard() {
               )}
             </div>
             <div>
-              <p className="mb-2 text-sm font-semibold text-muted-foreground">Pooling rate</p>
+              <p className="mb-3 text-sm font-semibold text-muted-foreground">Pooling rate</p>
               <PoolingDonut pooled={pooledCount} solo={Math.max(0, orders - pooledCount)} />
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* ─── Suppliers table ─── */}
       <Card className="reveal mt-4" style={{ animationDelay: "440ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5 text-primary" /> Suppliers
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <Store className="h-4 w-4 text-primary" />
+            </span>
+            Suppliers
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="pb-2 font-medium">Business</th>
-                <th className="pb-2 font-medium">Vehicle</th>
-                <th className="pb-2 font-medium">GHS/kg</th>
-                <th className="pb-2 font-medium">Rating</th>
-                <th className="pb-2 text-right font-medium">Trust</th>
+              <tr className="border-b border-border/60 text-left text-muted-foreground">
+                <th className="pb-3 font-medium">Business</th>
+                <th className="pb-3 font-medium">Vehicle</th>
+                <th className="pb-3 font-medium">GHS/kg</th>
+                <th className="pb-3 font-medium">Rating</th>
+                <th className="pb-3 text-right font-medium">Trust</th>
               </tr>
             </thead>
             <tbody>
               {supplierList.map((s) => {
                 const t = trustMap.get(s.id);
                 return (
-                  <tr key={s.id} className="border-b border-border/60 last:border-0">
-                    <td className="py-2 font-medium">{s.businessName}</td>
-                    <td className="py-2 text-muted-foreground">{s.vehicleType}</td>
-                    <td className="py-2">{s.pricePerKg}</td>
-                    <td className="py-2">
+                  <tr key={s.id} className="border-b border-border/40 transition-colors hover:bg-muted/30 last:border-0">
+                    <td className="py-3 font-medium">{s.businessName}</td>
+                    <td className="py-3 text-muted-foreground">{s.vehicleType}</td>
+                    <td className="py-3">{s.pricePerKg}</td>
+                    <td className="py-3">
                       <span className="inline-flex items-center gap-1">
                         <Star className="h-3.5 w-3.5 fill-accent text-accent" />
                         {s.ratingCount > 0 ? `${s.ratingAvg.toFixed(1)} (${s.ratingCount})` : "New"}
                       </span>
                     </td>
-                    <td className="py-2 text-right">{t ? `${t.score} · ${t.label}` : "—"}</td>
+                    <td className="py-3 text-right">{t ? `${t.score} · ${t.label}` : "—"}</td>
                   </tr>
                 );
               })}
@@ -196,30 +212,34 @@ export default async function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* ─── Recent orders ─── */}
       <Card className="reveal mt-4" style={{ animationDelay: "480ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" /> Recent orders
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <Package className="h-4 w-4 text-primary" />
+            </span>
+            Recent orders
           </CardTitle>
           <CardDescription>{completedDeliveries} delivered of {orders} total.</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="pb-2 font-medium">Student</th>
-                <th className="pb-2 font-medium">Supplier</th>
-                <th className="pb-2 font-medium">Fee</th>
-                <th className="pb-2 text-right font-medium">Status</th>
+              <tr className="border-b border-border/60 text-left text-muted-foreground">
+                <th className="pb-3 font-medium">Student</th>
+                <th className="pb-3 font-medium">Supplier</th>
+                <th className="pb-3 font-medium">Fee</th>
+                <th className="pb-3 text-right font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
               {recentOrders.map((o) => (
-                <tr key={o.id} className="border-b border-border/60 last:border-0">
-                  <td className="py-2 font-medium">{o.student.fullName}</td>
-                  <td className="py-2 text-muted-foreground">{o.supplier?.businessName ?? "—"}</td>
-                  <td className="py-2">{formatGhs(o.feeGhs)}</td>
-                  <td className="py-2 text-right">
+                <tr key={o.id} className="border-b border-border/40 transition-colors hover:bg-muted/30 last:border-0">
+                  <td className="py-3 font-medium">{o.student.fullName}</td>
+                  <td className="py-3 text-muted-foreground">{o.supplier?.businessName ?? "—"}</td>
+                  <td className="py-3">{formatGhs(o.feeGhs)}</td>
+                  <td className="py-3 text-right">
                     <OrderStatusBadge status={o.status} />
                   </td>
                 </tr>
@@ -229,10 +249,14 @@ export default async function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* ─── Service activity ─── */}
       <Card className="reveal mt-4" style={{ animationDelay: "460ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" /> Service activity
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <Activity className="h-4 w-4 text-primary" />
+            </span>
+            Service activity
           </CardTitle>
           <CardDescription>Audit trail of external calls (email · SMS · payments).</CardDescription>
         </CardHeader>
@@ -240,14 +264,14 @@ export default async function AdminDashboard() {
           {logs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No external calls logged yet.</p>
           ) : (
-            <ul className="divide-y divide-border text-sm">
+            <ul className="divide-y divide-border/40 text-sm">
               {logs.map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-3 py-2">
-                  <span className="flex items-center gap-2">
+                <li key={l.id} className="flex items-center justify-between gap-3 py-3">
+                  <span className="flex items-center gap-2.5">
                     <span
-                      className={`h-2 w-2 rounded-full ${l.success ? "bg-success" : "bg-destructive"}`}
+                      className={`h-2.5 w-2.5 rounded-full ${l.success ? "bg-success" : "bg-destructive"}`}
                     />
-                    <span className="font-medium uppercase">{l.service}</span>
+                    <span className="font-medium uppercase tracking-wide">{l.service}</span>
                     <span className="text-muted-foreground">{l.action}</span>
                   </span>
                   <span className="max-w-[55%] truncate text-right text-muted-foreground">

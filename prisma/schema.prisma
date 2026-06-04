@@ -2,7 +2,7 @@
 // Designed around the three differentiators:
 //   - Refill history (filledKg + deliveredAt) → prediction engine
 //   - Order.verifiedWeightKg + status VERIFYING → trust layer
-//   - Pool + Order.poolId → pooled hostel refills
+//   - Pool + Order.poolId → pooled hostel/area refills
 // These are relational/aggregate workloads → why Postgres, not Firestore.
 
 generator client {
@@ -55,29 +55,16 @@ model User {
   createdAt    DateTime  @default(now())
 
   // student fields
-  hostelId     String?
-  hostel       Hostel?   @relation(fields: [hostelId], references: [id])
-  roomNumber   String?
-  householdSize Int      @default(1) // seeds the burn-rate model
+  defaultAddress String?
+  defaultLat     Float?
+  defaultLng     Float?
+  householdSize  Int      @default(1) // seeds the burn-rate model
 
   // supplier profile (1:1) if role == SUPPLIER
   supplier     Supplier?
 
   orders       Order[]   @relation("StudentOrders")
   reviews      Review[]
-}
-
-model Hostel {
-  id        String  @id @default(cuid())
-  name      String
-  block     String  // pooling groups by (hostelId, block)
-  campus    String
-  lat       Float?
-  lng       Float?
-  users     User[]
-  orders    Order[]
-
-  @@unique([name, block])
 }
 
 model Supplier {
@@ -100,9 +87,11 @@ model Order {
   studentId       String
   supplier        Supplier?    @relation(fields: [supplierId], references: [id])
   supplierId      String?
-  hostel          Hostel       @relation(fields: [hostelId], references: [id])
-  hostelId        String
-  roomNumber      String
+  
+  // Delivery Location
+  address         String
+  lat             Float?
+  lng             Float?
 
   cylinderSize    CylinderSize
   requestedKg     Float
@@ -132,8 +121,8 @@ model Order {
 
 model Pool {
   id        String   @id @default(cuid())
-  hostelId  String
-  block     String
+  lat       Float
+  lng       Float
   createdAt DateTime @default(now())
   orders    Order[]
 }

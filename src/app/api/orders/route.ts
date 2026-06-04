@@ -11,8 +11,9 @@ import { notifyOrderEvent } from "@/lib/services/notifications";
 const schema = z.object({
   supplierId: z.string().min(1, "Choose a supplier"),
   cylinderSize: z.nativeEnum(CylinderSize),
-  hostelId: z.string().min(1).optional(),
-  roomNumber: z.string().trim().min(1).optional(),
+  address: z.string().trim().min(1, "Address is required"),
+  lat: z.number().nullable(),
+  lng: z.number().nullable(),
   specialInstructions: z.string().trim().max(280).optional().or(z.literal("")),
   express: z.boolean().optional(),
 });
@@ -35,15 +36,6 @@ export async function POST(req: Request) {
   const student = await prisma.user.findUnique({ where: { id: user.id } });
   if (!student) return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
-  const hostelId = input.hostelId ?? student.hostelId;
-  const roomNumber = input.roomNumber ?? student.roomNumber;
-  if (!hostelId || !roomNumber) {
-    return NextResponse.json(
-      { error: "Add your hostel and room before ordering." },
-      { status: 400 },
-    );
-  }
-
   const supplier = await prisma.supplier.findUnique({ where: { id: input.supplierId } });
   if (!supplier) return NextResponse.json({ error: "Supplier not found" }, { status: 400 });
 
@@ -51,12 +43,23 @@ export async function POST(req: Request) {
   const express = input.express ?? false;
   const fee = computeFee(kg, supplier.pricePerKg, { express });
 
+  // Update student defaults
+  await prisma.user.update({
+    where: { id: student.id },
+    data: {
+      defaultAddress: input.address,
+      defaultLat: input.lat,
+      defaultLng: input.lng,
+    },
+  });
+
   const order = await prisma.order.create({
     data: {
       studentId: student.id,
       supplierId: supplier.id,
-      hostelId,
-      roomNumber,
+      address: input.address,
+      lat: input.lat,
+      lng: input.lng,
       cylinderSize: input.cylinderSize,
       requestedKg: kg,
       express,
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
     },
   });
 
-  // Auto-pool with same-supplier, same-block PENDING orders in the time window.
+  // Auto-pool with same-supplier nearby PENDING orders in the time window.
   const pool = await poolOrder(order.id);
 
   await notifyOrderEvent("placed", order.id);

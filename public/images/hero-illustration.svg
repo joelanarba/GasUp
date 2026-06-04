@@ -1,0 +1,275 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF3E0"/>
+      <stop offset="100%" stop-color="#FFE0B2"/>
+    </linearGradient>
+    <linearGradient id="sunGlow" cx="0.7" cy="0.2" r="0.4" fx="0.7" fy="0.2" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFF3E0" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="buildingGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4A574"/>
+      <stop offset="100%" stop-color="#C4956A"/>
+    </linearGradient>
+    <linearGradient id="buildingGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8C9A0"/>
+      <stop offset="100%" stop-color="#D4B48A"/>
+    </linearGradient>
+    <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B7355"/>
+      <stop offset="100%" stop-color="#6B5B45"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="800" height="500" fill="url(#sky)"/>
+
+  <!-- Sun glow -->
+  <circle cx="650" cy="80" r="200" fill="url(#sunGlow)"/>
+  <circle cx="650" cy="80" r="40" fill="#F59E0B" opacity="0.6"/>
+
+  <!-- Distant buildings silhouette -->
+  <rect x="0" y="200" width="120" height="180" rx="2" fill="#C4956A" opacity="0.4"/>
+  <rect x="100" y="230" width="80" height="150" rx="2" fill="#B8845A" opacity="0.4"/>
+  <rect x="680" y="210" width="120" height="170" rx="2" fill="#C4956A" opacity="0.3"/>
+
+  <!-- Ground -->
+  <rect x="0" y="380" width="800" height="120" fill="#E8D5B8"/>
+
+  <!-- Road -->
+  <path d="M0,420 Q200,410 400,415 Q600,420 800,410 L800,460 Q600,465 400,460 Q200,455 0,462 Z" fill="url(#roadGrad)"/>
+  <!-- Road marking -->
+  <path d="M50,440 L150,438" stroke="#D4C4A0" stroke-width="2" stroke-dasharray="12,8" opacity="0.6"/>
+  <path d="M200,437 L350,436" stroke="#D4C4A0" stroke-width="2" stroke-dasharray="12,8" opacity="0.6"/>
+  <path d="M400,436 L550,437" stroke="#D4C4A0" stroke-width="2" stroke-dasharray="12,8" opacity="0.6"/>
+  <path d="M600,438 L750,440" stroke="#D4C4A0" stroke-width="2" stroke-dasharray="12,8" opacity="0.6"/>
+
+  <!-- Sidewalk -->
+  <rect x="0" y="380" width="800" height="35" fill="#E0C8A8" rx="1"/>
+
+  <!-- Main hostel building -->
+  <g transform="translate(420, 120)">
+    <!-- Building body -->
+    <rect x="0" y="60" width="280" height="220" rx="3" fill="url(#buildingGrad)"/>
+    <!-- Roof with African-style overhang -->
+    <path d="M-15,60 L140,20 L295,60 Z" fill="#E0521E" opacity="0.85"/>
+    <path d="M-10,60 L140,28 L290,60 Z" fill="#C4412E" opacity="0.5"/>
+    <!-- Roof ridge detail -->
+    <line x1="140" y1="20" x2="140" y2="28" stroke="#141413" stroke-width="2"/>
+
+    <!-- Windows - Row 1 -->
+    <rect x="20" y="85" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="70" y="85" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="120" y="85" width="35" height="40" rx="2" fill="#F59E0B" opacity="0.4"/>
+    <rect x="170" y="85" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="220" y="85" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+
+    <!-- Window frames -->
+    <line x1="37" y1="85" x2="37" y2="125" stroke="#B8845A" stroke-width="1"/>
+    <line x1="87" y1="85" x2="87" y2="125" stroke="#B8845A" stroke-width="1"/>
+    <line x1="137" y1="85" x2="137" y2="125" stroke="#B8845A" stroke-width="1"/>
+    <line x1="187" y1="85" x2="187" y2="125" stroke="#B8845A" stroke-width="1"/>
+    <line x1="237" y1="85" x2="237" y2="125" stroke="#B8845A" stroke-width="1"/>
+
+    <!-- Windows - Row 2 -->
+    <rect x="20" y="145" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="70" y="145" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="120" y="145" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="170" y="145" width="35" height="40" rx="2" fill="#FFF8E7" opacity="0.9"/>
+    <rect x="220" y="145" width="35" height="40" rx="2" fill="#F59E0B" opacity="0.3"/>
+
+    <!-- Entrance -->
+    <rect x="110" y="210" width="60" height="70" rx="3" fill="#8B6B4A"/>
+    <rect x="115" y="215" width="50" height="60" rx="2" fill="#6B4B2A"/>
+    <!-- Entrance arch -->
+    <path d="M110,210 Q140,195 170,210" fill="none" stroke="#C4956A" stroke-width="3"/>
+
+    <!-- Building details - horizontal bands -->
+    <line x1="0" y1="135" x2="280" y2="135" stroke="#B8845A" stroke-width="2" opacity="0.5"/>
+    <line x1="0" y1="200" x2="280" y2="200" stroke="#B8845A" stroke-width="2" opacity="0.5"/>
+
+    <!-- Decorative African pattern band -->
+    <rect x="0" y="55" width="280" height="8" fill="#E0521E" opacity="0.6"/>
+    <circle cx="15" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="30" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="45" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="60" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="75" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="90" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="205" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="220" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="235" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="250" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+    <circle cx="265" cy="59" r="2" fill="#FFF3E0" opacity="0.7"/>
+  </g>
+
+  <!-- Secondary building left -->
+  <g transform="translate(30, 180)">
+    <rect x="0" y="30" width="160" height="170" rx="2" fill="url(#buildingGrad2)"/>
+    <path d="M-8,30 L80,5 L168,30 Z" fill="#E0521E" opacity="0.7"/>
+    <rect x="15" y="55" width="28" height="32" rx="2" fill="#FFF8E7" opacity="0.8"/>
+    <rect x="55" y="55" width="28" height="32" rx="2" fill="#F59E0B" opacity="0.35"/>
+    <rect x="95" y="55" width="28" height="32" rx="2" fill="#FFF8E7" opacity="0.8"/>
+    <rect x="15" y="105" width="28" height="32" rx="2" fill="#FFF8E7" opacity="0.8"/>
+    <rect x="55" y="105" width="28" height="32" rx="2" fill="#FFF8E7" opacity="0.8"/>
+    <rect x="95" y="105" width="28" height="32" rx="2" fill="#FFF8E7" opacity="0.8"/>
+    <rect x="135" y="55" width="15" height="32" rx="1" fill="#FFF8E7" opacity="0.6"/>
+    <rect x="135" y="105" width="15" height="32" rx="1" fill="#FFF8E7" opacity="0.6"/>
+  </g>
+
+  <!-- Palm tree 1 (left) -->
+  <g transform="translate(230, 130)">
+    <rect x="-4" y="80" width="8" height="150" rx="3" fill="#8B6B4A"/>
+    <rect x="-3" y="90" width="6" height="10" rx="2" fill="#7B5B3A" opacity="0.6"/>
+    <rect x="-3" y="110" width="6" height="10" rx="2" fill="#7B5B3A" opacity="0.6"/>
+    <rect x="-3" y="130" width="6" height="10" rx="2" fill="#7B5B3A" opacity="0.6"/>
+    <!-- Fronds -->
+    <path d="M0,80 Q-50,50 -80,70" stroke="#5B8C3A" stroke-width="3" fill="none"/>
+    <path d="M0,80 Q-40,40 -60,30" stroke="#6B9C4A" stroke-width="3" fill="none"/>
+    <path d="M0,80 Q-10,30 -20,15" stroke="#5B8C3A" stroke-width="3" fill="none"/>
+    <path d="M0,80 Q30,35 50,20" stroke="#6B9C4A" stroke-width="3" fill="none"/>
+    <path d="M0,80 Q50,45 70,40" stroke="#5B8C3A" stroke-width="3" fill="none"/>
+    <path d="M0,80 Q55,60 80,65" stroke="#6B9C4A" stroke-width="3" fill="none"/>
+    <!-- Leaf details -->
+    <path d="M-80,70 Q-60,55 -40,60" stroke="#4A7C2A" stroke-width="1" fill="none" opacity="0.5"/>
+    <path d="M50,20 Q35,30 20,40" stroke="#4A7C2A" stroke-width="1" fill="none" opacity="0.5"/>
+    <!-- Coconuts -->
+    <circle cx="-5" cy="82" r="4" fill="#8B7355"/>
+    <circle cx="5" cy="84" r="4" fill="#7B6345"/>
+  </g>
+
+  <!-- Palm tree 2 (right) -->
+  <g transform="translate(750, 150)">
+    <rect x="-4" y="60" width="8" height="130" rx="3" fill="#8B6B4A"/>
+    <path d="M0,60 Q-40,30 -60,45" stroke="#5B8C3A" stroke-width="3" fill="none"/>
+    <path d="M0,60 Q-20,20 -30,10" stroke="#6B9C4A" stroke-width="3" fill="none"/>
+    <path d="M0,60 Q20,20 35,15" stroke="#5B8C3A" stroke-width="3" fill="none"/>
+    <path d="M0,60 Q40,35 55,40" stroke="#6B9C4A" stroke-width="3" fill="none"/>
+    <circle cx="-3" cy="62" r="3" fill="#8B7355"/>
+    <circle cx="4" cy="63" r="3" fill="#7B6345"/>
+  </g>
+
+  <!-- Small bush/plant -->
+  <g transform="translate(380, 365)">
+    <ellipse cx="0" cy="0" rx="20" ry="12" fill="#6B9C4A" opacity="0.7"/>
+    <ellipse cx="10" cy="-3" rx="15" ry="10" fill="#5B8C3A" opacity="0.7"/>
+    <ellipse cx="-8" cy="-2" rx="12" ry="8" fill="#7BAC5A" opacity="0.6"/>
+  </g>
+
+  <!-- Student waiting at entrance -->
+  <g transform="translate(545, 280)">
+    <!-- Shadow -->
+    <ellipse cx="0" cy="95" rx="15" ry="4" fill="#141413" opacity="0.15"/>
+    <!-- Legs -->
+    <rect x="-7" y="60" width="6" height="32" rx="2" fill="#2D5A3D"/>
+    <rect x="1" y="60" width="6" height="32" rx="2" fill="#2D5A3D"/>
+    <!-- Shoes -->
+    <rect x="-9" y="89" width="10" height="5" rx="2" fill="#4A3A2A"/>
+    <rect x="-1" y="89" width="10" height="5" rx="2" fill="#4A3A2A"/>
+    <!-- Body/torso - shirt -->
+    <rect x="-10" y="25" width="20" height="38" rx="4" fill="#F59E0B"/>
+    <!-- Arms -->
+    <rect x="-15" y="28" width="6" height="25" rx="3" fill="#8B6B4A"/>
+    <rect x="9" y="28" width="6" height="25" rx="3" fill="#8B6B4A"/>
+    <!-- Right hand waving -->
+    <circle cx="12" cy="27" r="4" fill="#8B6B4A"/>
+    <!-- Neck -->
+    <rect x="-3" y="18" width="6" height="8" rx="2" fill="#8B6B4A"/>
+    <!-- Head -->
+    <circle cx="0" cy="10" r="12" fill="#8B6B4A"/>
+    <!-- Hair -->
+    <path d="M-10,5 Q-10,-5 0,-8 Q10,-5 10,5" fill="#2A1A0A"/>
+    <!-- Face features -->
+    <circle cx="-4" cy="8" r="1.2" fill="#2A1A0A"/>
+    <circle cx="4" cy="8" r="1.2" fill="#2A1A0A"/>
+    <path d="M-3,14 Q0,17 3,14" fill="none" stroke="#6B4B2A" stroke-width="1"/>
+  </g>
+
+  <!-- Delivery rider on motorcycle -->
+  <g transform="translate(280, 325)">
+    <!-- Shadow -->
+    <ellipse cx="10" cy="65" rx="45" ry="6" fill="#141413" opacity="0.12"/>
+
+    <!-- Motorcycle body -->
+    <path d="M-30,40 L40,38 L50,45 L45,50 L-25,52 L-35,48 Z" fill="#141413"/>
+    <!-- Engine block -->
+    <rect x="0" y="42" width="20" height="12" rx="2" fill="#3A3A3A"/>
+    <!-- Exhaust -->
+    <rect x="35" y="48" width="18" height="4" rx="2" fill="#6B6B6B"/>
+
+    <!-- Back wheel -->
+    <circle cx="-20" cy="55" r="14" fill="#3A3A3A"/>
+    <circle cx="-20" cy="55" r="10" fill="#5A5A5A"/>
+    <circle cx="-20" cy="55" r="3" fill="#8A8A8A"/>
+
+    <!-- Front wheel -->
+    <circle cx="40" cy="55" r="14" fill="#3A3A3A"/>
+    <circle cx="40" cy="55" r="10" fill="#5A5A5A"/>
+    <circle cx="40" cy="55" r="3" fill="#8A8A8A"/>
+
+    <!-- Front fork -->
+    <line x1="35" y1="30" x2="40" y2="45" stroke="#4A4A4A" stroke-width="3"/>
+
+    <!-- Handlebar -->
+    <line x1="28" y1="25" x2="42" y2="25" stroke="#4A4A4A" stroke-width="3"/>
+
+    <!-- Seat -->
+    <rect x="-15" y="30" width="35" height="8" rx="4" fill="#4A3A2A"/>
+
+    <!-- Gas cylinder on back -->
+    <g transform="translate(-30, -5)">
+      <rect x="-8" y="10" width="18" height="35" rx="8" fill="#E0521E"/>
+      <rect x="-6" y="8" width="14" height="6" rx="2" fill="#C4412E"/>
+      <rect x="-2" y="4" width="6" height="6" rx="3" fill="#8A8A8A"/>
+      <!-- Cylinder band -->
+      <rect x="-6" y="28" width="14" height="3" rx="1" fill="#C4412E" opacity="0.6"/>
+      <!-- Straps -->
+      <line x1="-8" y1="15" x2="-8" y2="40" stroke="#4A3A2A" stroke-width="2"/>
+      <line x1="10" y1="15" x2="10" y2="40" stroke="#4A3A2A" stroke-width="2"/>
+    </g>
+
+    <!-- Rider -->
+    <g transform="translate(5, -40)">
+      <!-- Legs on bike -->
+      <rect x="-12" y="45" width="7" height="22" rx="2" fill="#2D5A3D" transform="rotate(-10,-8,50)"/>
+      <rect x="5" y="45" width="7" height="22" rx="2" fill="#2D5A3D" transform="rotate(10,8,50)"/>
+      <!-- Shoes on pegs -->
+      <rect x="-16" y="65" width="8" height="4" rx="2" fill="#4A3A2A"/>
+      <rect x="8" y="65" width="8" height="4" rx="2" fill="#4A3A2A"/>
+      <!-- Body -->
+      <rect x="-10" y="15" width="20" height="32" rx="5" fill="#E0521E"/>
+      <!-- Arms -->
+      <rect x="-16" y="18" width="7" height="22" rx="3" fill="#8B6B4A" transform="rotate(15,-12,25)"/>
+      <rect x="9" y="18" width="7" height="22" rx="3" fill="#8B6B4A" transform="rotate(-15,12,25)"/>
+      <!-- Hands on handlebars -->
+      <circle cx="20" cy="40" r="3.5" fill="#8B6B4A"/>
+      <circle cx="-13" cy="42" r="3.5" fill="#8B6B4A"/>
+      <!-- Neck -->
+      <rect x="-3" y="8" width="6" height="8" rx="2" fill="#8B6B4A"/>
+      <!-- Helmet -->
+      <path d="M-12,5 Q-12,-10 0,-14 Q12,-10 12,5 Q12,8 8,8 L-8,8 Q-12,8 -12,5 Z" fill="#F59E0B"/>
+      <path d="M-10,2 Q0,-2 10,2" fill="none" stroke="#E0521E" stroke-width="2"/>
+      <!-- Visor -->
+      <path d="M-8,3 Q0,6 8,3" fill="#141413" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- Small decorative elements -->
+  <!-- Path/walkway to building -->
+  <path d="M540,400 Q545,390 550,380" stroke="#C4956A" stroke-width="8" fill="none" opacity="0.4"/>
+
+  <!-- Small flower/plant near building -->
+  <g transform="translate(420, 370)">
+    <line x1="0" y1="0" x2="0" y2="12" stroke="#5B8C3A" stroke-width="2"/>
+    <circle cx="-3" cy="-2" r="3" fill="#F59E0B" opacity="0.7"/>
+    <circle cx="3" cy="-3" r="3" fill="#E0521E" opacity="0.6"/>
+    <circle cx="0" cy="-5" r="3" fill="#F59E0B" opacity="0.8"/>
+  </g>
+
+  <!-- Warm ambient particles -->
+  <circle cx="300" cy="100" r="2" fill="#F59E0B" opacity="0.2"/>
+  <circle cx="450" cy="150" r="1.5" fill="#F59E0B" opacity="0.15"/>
+  <circle cx="200" cy="200" r="2" fill="#E0521E" opacity="0.1"/>
+  <circle cx="600" cy="120" r="1.5" fill="#F59E0B" opacity="0.2"/>
+</svg>

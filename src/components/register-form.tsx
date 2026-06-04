@@ -9,20 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export type HostelOption = { id: string; label: string };
-
 const selectClass =
   "flex h-11 w-full rounded-md border border-input bg-card px-3.5 text-base shadow-sm focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40";
 
-export function RegisterForm({ hostels }: { hostels: HostelOption[] }) {
+export function RegisterForm() {
   const router = useRouter();
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
-    hostelId: "",
-    roomNumber: "",
     householdSize: "1",
   });
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +45,18 @@ export function RegisterForm({ hostels }: { hostels: HostelOption[] }) {
       return;
     }
 
-    // Auto sign-in after registration, then role-aware landing.
+    // Auto sign-in after registration
     const signin = await signIn("credentials", {
       redirect: false,
       email: form.email,
       password: form.password,
     });
+    
     if (signin?.error) {
       router.push("/login");
       return;
     }
+    
     router.push("/dashboard");
     router.refresh();
   }
@@ -76,22 +74,6 @@ export function RegisterForm({ hostels }: { hostels: HostelOption[] }) {
       <div className="space-y-2">
         <Label htmlFor="phone">Phone <span className="text-muted-foreground">(for SMS updates)</span></Label>
         <Input id="phone" inputMode="numeric" value={form.phone} onChange={set("phone")} placeholder="0241234567" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="hostelId">Hostel & block</Label>
-          <select id="hostelId" required value={form.hostelId} onChange={set("hostelId")} className={selectClass}>
-            <option value="" disabled>Select…</option>
-            {hostels.map((h) => (
-              <option key={h.id} value={h.id}>{h.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="roomNumber">Room</Label>
-          <Input id="roomNumber" required value={form.roomNumber} onChange={set("roomNumber")} placeholder="A12" />
-        </div>
       </div>
 
       <div className="space-y-2">

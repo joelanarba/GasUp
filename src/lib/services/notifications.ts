@@ -36,7 +36,7 @@ export async function notifyOrderEvent(event: OrderEvent, orderId: string): Prom
       },
       on_the_way: {
         subject: "Your gas is on the way",
-        line: `Your ${item} refill is on the way to Room ${order.roomNumber}.`,
+        line: `Your ${item} refill is on the way to ${order.address}.`,
       },
       delivered: {
         subject: "Delivered — please confirm",

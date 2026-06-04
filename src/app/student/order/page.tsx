@@ -11,7 +11,7 @@ export default async function NewOrderPage() {
   const name = user?.name ?? "there";
 
   const [student, suppliers] = await Promise.all([
-    prisma.user.findUnique({ where: { id: user!.id }, include: { hostel: true } }),
+    prisma.user.findUnique({ where: { id: user!.id } }),
     prisma.supplier.findMany({
       where: { availability: { not: "OFFLINE" } },
       orderBy: [{ ratingAvg: "desc" }, { pricePerKg: "asc" }],
@@ -29,11 +29,6 @@ export default async function NewOrderPage() {
     trust: trust.get(s.id) ?? null,
   }));
 
-  const deliverTo =
-    student?.hostel && student.roomNumber
-      ? `${student.hostel.name} — Block ${student.hostel.block}, Room ${student.roomNumber}`
-      : null;
-
   return (
     <DashboardShell role="STUDENT" name={name}>
       <Link
@@ -48,7 +43,12 @@ export default async function NewOrderPage() {
       <p className="text-muted-foreground">Pick a size and supplier — we&apos;ll handle the rest.</p>
 
       <div className="reveal mt-6" style={{ animationDelay: "120ms" }}>
-        <OrderForm suppliers={choices} deliverTo={deliverTo} />
+        <OrderForm
+          suppliers={choices}
+          defaultAddress={student?.defaultAddress ?? null}
+          defaultLat={student?.defaultLat ?? null}
+          defaultLng={student?.defaultLng ?? null}
+        />
       </div>
     </DashboardShell>
   );

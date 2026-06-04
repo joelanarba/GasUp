@@ -9,6 +9,7 @@ import { computeFee, formatGhs, EXPRESS_SURCHARGE } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { TrustBadge } from "@/components/trust-badge";
 import { type Trust } from "@/lib/trust";
+import { LocationPicker, type LocationValue } from "@/components/location-picker";
 import { cn } from "@/lib/utils";
 
 export type SupplierChoice = {
@@ -23,10 +24,14 @@ export type SupplierChoice = {
 
 export function OrderForm({
   suppliers,
-  deliverTo,
+  defaultAddress,
+  defaultLat,
+  defaultLng,
 }: {
   suppliers: SupplierChoice[];
-  deliverTo: string | null;
+  defaultAddress: string | null;
+  defaultLat: number | null;
+  defaultLng: number | null;
 }) {
   const router = useRouter();
   const [size, setSize] = useState<CylinderSize>("KG_6");
@@ -35,6 +40,12 @@ export function OrderForm({
   const [express, setExpress] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [address, setAddress] = useState<string>(defaultAddress ?? "");
+  const [lat, setLat] = useState<number | null>(defaultLat);
+  const [lng, setLng] = useState<number | null>(defaultLng);
+  
+  const [editingLoc, setEditingLoc] = useState(false);
 
   const kg = kgFor(size);
   const supplier = suppliers.find((s) => s.id === supplierId);
@@ -45,12 +56,28 @@ export function OrderForm({
       setError("Choose a supplier.");
       return;
     }
+    if (!address.trim()) {
+      setError("Set your delivery address.");
+      return;
+    }
+    if (!lat || !lng) {
+      setError("Please pin your exact location on the map.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ supplierId, cylinderSize: size, specialInstructions: instructions, express }),
+      body: JSON.stringify({
+        supplierId,
+        cylinderSize: size,
+        address: address.trim(),
+        lat,
+        lng,
+        specialInstructions: instructions,
+        express,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -135,23 +162,56 @@ export function OrderForm({
         </div>
       </section>
 
-      {/* Delivery + notes */}
+      {/* Delivery location + notes */}
       <section className="space-y-3">
-        <div className="flex items-start gap-2 rounded-lg border border-border bg-card p-4">
-          <MapPin className="mt-0.5 h-5 w-5 text-primary" />
-          <div>
-            <p className="text-sm font-medium">Deliver to</p>
-            <p className="text-sm text-muted-foreground">
-              {deliverTo ?? "Add your hostel and room in your profile first."}
-            </p>
+        <h2 className="font-display text-lg font-semibold">Delivery location</h2>
+        {editingLoc ? (
+          <div className="space-y-3">
+            <LocationPicker
+              autoLocate={!lat}
+              value={{ address, lat, lng }}
+              onChange={(v: LocationValue) => {
+                setAddress(v.address);
+                setLat(v.lat);
+                setLng(v.lng);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setEditingLoc(false)}
+              disabled={!address.trim() || !lat || !lng}
+            >
+              Confirm delivery address
+            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10">
+                <MapPin className="h-5 w-5 text-primary" />
+              </span>
+              <div>
+                <p className="text-sm font-medium">Deliver to</p>
+                <p className="text-sm text-muted-foreground">{address || "Set your delivery location"}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditingLoc(true)}
+              className="shrink-0 text-sm font-semibold text-primary hover:underline"
+            >
+              {address ? "Change" : "Add address"}
+            </button>
+          </div>
+        )}
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           rows={2}
           maxLength={280}
-          placeholder="Special instructions (gate code, landmark…) — optional"
+          placeholder="Special instructions (e.g. call when at the gate) — optional"
           className="flex w-full rounded-md border border-input bg-card px-3.5 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         />
       </section>
@@ -210,7 +270,7 @@ export function OrderForm({
 
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
-      <Button size="lg" className="w-full" onClick={place} disabled={busy || !deliverTo}>
+      <Button size="lg" className="w-full" onClick={place} disabled={busy || !address.trim() || !lat || !lng}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {busy ? "Placing order…" : "Place order"}
       </Button>

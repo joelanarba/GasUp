@@ -14,7 +14,7 @@ export default async function StudentOrdersPage() {
 
   const orders = await prisma.order.findMany({
     where: { studentId: user!.id },
-    include: { supplier: true, hostel: true },
+    include: { supplier: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -48,7 +48,7 @@ export default async function StudentOrdersPage() {
             <li key={o.id} className="reveal" style={{ animationDelay: `${i * 50}ms` }}>
               <Link
                 href={`/student/orders/${o.id}`}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-warm transition-colors hover:border-primary/40"
+                className="flex items-center justify-between rounded-xl border border-border/60 bg-card p-4 shadow-elevated transition-all duration-200 hover:border-primary/30 hover:shadow-glow-sm"
               >
                 <div>
                   <div className="flex items-center gap-2">

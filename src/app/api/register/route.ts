@@ -14,8 +14,6 @@ const schema = z.object({
     .optional()
     .or(z.literal("")),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  hostelId: z.string().min(1, "Choose your hostel block"),
-  roomNumber: z.string().trim().min(1, "Enter your room number"),
   householdSize: z.coerce.number().int().min(1).max(12),
 });
 
@@ -44,11 +42,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const hostel = await prisma.hostel.findUnique({ where: { id: data.hostelId } });
-  if (!hostel) {
-    return NextResponse.json({ error: "That hostel block was not found." }, { status: 400 });
-  }
-
   await prisma.user.create({
     data: {
       fullName: data.fullName,
@@ -56,8 +49,6 @@ export async function POST(req: Request) {
       phone: data.phone || null,
       role: "STUDENT",
       householdSize: data.householdSize,
-      hostelId: data.hostelId,
-      roomNumber: data.roomNumber,
       passwordHash: await bcrypt.hash(data.password, 10),
     },
   });

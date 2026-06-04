@@ -24,7 +24,6 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
     where: { id: params.id },
     include: {
       supplier: true,
-      hostel: true,
       review: true,
       pool: { include: { _count: { select: { orders: true } } } },
     },
@@ -61,7 +60,7 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           <Users className="h-5 w-5 text-success" />
           <p className="text-sm">
             <span className="font-semibold text-success">Pooled with {poolSize - 1} neighbour{poolSize - 1 > 1 ? "s" : ""}.</span>{" "}
-            One rider trip to Block {order.hostel.block} — you saved {formatGhs(DELIVERY_FEE_SOLO - DELIVERY_FEE_POOLED)} on delivery.
+            One rider trip to your area — you saved {formatGhs(DELIVERY_FEE_SOLO - DELIVERY_FEE_POOLED)} on delivery.
           </p>
         </div>
       )}
@@ -82,8 +81,8 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           </CardHeader>
           <CardContent>
             <DeliveryTracker
-              lat={order.hostel.lat ?? 5.1131}
-              lng={order.hostel.lng ?? -1.2912}
+              lat={order.lat ?? 5.1131}
+              lng={order.lng ?? -1.2912}
             />
           </CardContent>
         </Card>
@@ -98,7 +97,7 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           <Row label="Cylinder" value={`${cylinderLabel(order.cylinderSize)} (${order.requestedKg} kg)`} />
           <Row
             label="Deliver to"
-            value={`${order.hostel.name} — Block ${order.hostel.block}, Room ${order.roomNumber}`}
+            value={order.address}
             icon
           />
           {order.specialInstructions && <Row label="Notes" value={order.specialInstructions} />}

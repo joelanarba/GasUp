@@ -19,22 +19,26 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const firstName = name.split(" ")[0] ?? name;
+  const initial = firstName.charAt(0).toUpperCase();
   return (
-    <div className="min-h-dvh">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
+    <div className="min-h-dvh bg-background">
+      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-3">
           <Brand size="sm" />
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold leading-tight">{firstName}</p>
               <p className="text-xs text-muted-foreground">{roleLabel[role]}</p>
             </div>
-            <Badge variant="muted">{roleLabel[role]}</Badge>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {initial}
+            </div>
+            <Badge variant="muted" className="hidden sm:inline-flex">{roleLabel[role]}</Badge>
             <SignOutButton />
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-5 py-6">{children}</main>
+      <main className="mx-auto max-w-4xl px-5 py-8">{children}</main>
     </div>
   );
 }

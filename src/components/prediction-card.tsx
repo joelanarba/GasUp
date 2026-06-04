@@ -16,13 +16,19 @@ export function PredictionCard({ prediction }: { prediction: Extract<Prediction,
   const urgent = prediction.level === "empty" || prediction.level === "low";
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={cn(
+      "overflow-hidden",
+      urgent && "gradient-border",
+    )}>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div>
           <CardTitle className="flex items-center gap-2">
-            <Gauge className="h-5 w-5 text-primary" /> Your gas level
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <Gauge className="h-4 w-4 text-primary" />
+            </span>
+            Your gas level
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="mt-1.5">
             {prediction.method === "history"
               ? `Learned from your refill cadence (~${Math.round(prediction.cycleDays)} days)`
               : "Estimated — one more refill personalises this"}
@@ -35,11 +41,11 @@ export function PredictionCard({ prediction }: { prediction: Extract<Prediction,
       <CardContent>
         <GasGauge percent={prediction.percent} daysLeft={prediction.daysLeft} level={prediction.level} />
 
-        <div className={cn("mt-2 text-center font-display text-xl font-semibold", copy.tone)}>
+        <div className={cn("mt-3 text-center font-display text-xl font-semibold", copy.tone)}>
           {copy.headline}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-5 rounded-lg border border-border/40 bg-muted/30 p-3">
           <ConsumptionCurve
             curve={prediction.curve}
             daysSinceFill={daysSinceFill}
@@ -47,7 +53,7 @@ export function PredictionCard({ prediction }: { prediction: Extract<Prediction,
           />
         </div>
 
-        <Button asChild size="lg" className="mt-4 w-full" variant={urgent ? "default" : "outline"}>
+        <Button asChild size="lg" className={cn("mt-5 w-full", urgent && "pulse-glow")} variant={urgent ? "default" : "outline"}>
           <Link href="/student/order">
             {urgent ? "Refill now" : "Order a refill"} <ArrowRight className="h-4 w-4" />
           </Link>

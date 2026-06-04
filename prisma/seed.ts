@@ -38,31 +38,13 @@ async function main() {
     },
   });
 
-  // --- Hostels: 3 halls x 2 blocks = 6 rows (a block is its own row;
-  //     pooling groups by (hostelId, block)) ---
-  const halls = [
-    { name: "Casford Hall", lat: 5.1131, lng: -1.2912 },
-    { name: "Adehye Hall", lat: 5.1148, lng: -1.2895 },
-    { name: "Valco Hall", lat: 5.1102, lng: -1.2934 },
+  const addresses = [
+    { name: "Casford Hall, Block A", lat: 5.1131, lng: -1.2912 },
+    { name: "Adehye Hall, Block B", lat: 5.1148, lng: -1.2895 },
+    { name: "Valco Hall, Block A", lat: 5.1102, lng: -1.2934 },
+    { name: "UCC Science Market", lat: 5.1120, lng: -1.2900 },
+    { name: "Amamoma, Blue Gate", lat: 5.1150, lng: -1.2880 },
   ];
-  const blocks = ["A", "B"];
-  const hostels = [];
-  for (const hall of halls) {
-    for (const block of blocks) {
-      const hostel = await prisma.hostel.upsert({
-        where: { name_block: { name: hall.name, block } },
-        update: { campus: "UCC", lat: hall.lat, lng: hall.lng },
-        create: {
-          name: hall.name,
-          block,
-          campus: "UCC",
-          lat: hall.lat,
-          lng: hall.lng,
-        },
-      });
-      hostels.push(hostel);
-    }
-  }
 
   // --- Suppliers (admin-created in real life; seeded here) ---
   const supplierSpecs = [
@@ -137,24 +119,25 @@ async function main() {
   // --- Students with historical DELIVERED orders so prediction has data
   //     on day one. orderHistory = [daysAgo,...] (most recent last). ---
   const studentSpecs = [
-    { email: "akua@gasup.app", fullName: "Akua Sarpong", householdSize: 1, hostelIdx: 0, room: "A12", size: CylinderSize.KG_6, history: [44, 22] },
-    // kofi shares Akua's hostel block (idx 0) so same-block pooling can be demoed.
-    { email: "kofi@gasup.app", fullName: "Kofi Annan", householdSize: 2, hostelIdx: 0, room: "A07", size: CylinderSize.KG_6, history: [30, 12] },
-    { email: "esi@gasup.app", fullName: "Esi Bonsu", householdSize: 3, hostelIdx: 2, room: "B03", size: CylinderSize.KG_12_5, history: [50, 20] },
-    { email: "nana@gasup.app", fullName: "Nana Adjei", householdSize: 1, hostelIdx: 3, room: "B15", size: CylinderSize.KG_6, history: [16] },
-    { email: "yaa@gasup.app", fullName: "Yaa Asantewaa", householdSize: 4, hostelIdx: 4, room: "A21", size: CylinderSize.KG_14_5, history: [38, 14] },
+    { email: "akua@gasup.app", fullName: "Akua Sarpong", householdSize: 1, locIdx: 0, size: CylinderSize.KG_6, history: [44, 22] },
+    // kofi shares Akua's loc (idx 0) so same-block pooling can be demoed.
+    { email: "kofi@gasup.app", fullName: "Kofi Annan", householdSize: 2, locIdx: 0, size: CylinderSize.KG_6, history: [30, 12] },
+    { email: "esi@gasup.app", fullName: "Esi Bonsu", householdSize: 3, locIdx: 2, size: CylinderSize.KG_12_5, history: [50, 20] },
+    { email: "nana@gasup.app", fullName: "Nana Adjei", householdSize: 1, locIdx: 3, size: CylinderSize.KG_6, history: [16] },
+    { email: "yaa@gasup.app", fullName: "Yaa Asantewaa", householdSize: 4, locIdx: 4, size: CylinderSize.KG_14_5, history: [38, 14] },
   ];
 
   for (let s = 0; s < studentSpecs.length; s++) {
     const spec = studentSpecs[s];
-    const hostel = hostels[spec.hostelIdx];
+    const loc = addresses[spec.locIdx];
     const student = await prisma.user.upsert({
       where: { email: spec.email },
       update: {
         role: Role.STUDENT,
         fullName: spec.fullName,
-        hostelId: hostel.id,
-        roomNumber: spec.room,
+        defaultAddress: loc.name,
+        defaultLat: loc.lat,
+        defaultLng: loc.lng,
         householdSize: spec.householdSize,
       },
       create: {
@@ -163,8 +146,9 @@ async function main() {
         role: Role.STUDENT,
         phone: "0240000000",
         householdSize: spec.householdSize,
-        hostelId: hostel.id,
-        roomNumber: spec.room,
+        defaultAddress: loc.name,
+        defaultLat: loc.lat,
+        defaultLng: loc.lng,
         passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10),
       },
     });
@@ -178,8 +162,9 @@ async function main() {
       const data = {
         studentId: student.id,
         supplierId: supplier.id,
-        hostelId: hostel.id,
-        roomNumber: spec.room,
+        address: loc.name,
+        lat: loc.lat,
+        lng: loc.lng,
         cylinderSize: spec.size,
         requestedKg: kg,
         status: OrderStatus.DELIVERED,

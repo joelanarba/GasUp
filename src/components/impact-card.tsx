@@ -8,22 +8,22 @@ export function ImpactCard({ impact, style }: { impact: Impact; style?: React.CS
   const metrics = [
     { icon: PiggyBank, label: "Student savings", value: formatGhs(impact.savingsGhs) },
     { icon: Route, label: "Rider trips saved", value: impact.tripsReduced.toString() },
-    { icon: Leaf, label: "Est. CO₂ avoided", value: `${impact.co2SavedKg} kg` },
+    { icon: Leaf, label: "Est. CO\u2082 avoided", value: `${impact.co2SavedKg} kg` },
   ];
   return (
-    <Card className="reveal mt-6 flame-gradient text-primary-foreground" style={style}>
+    <Card className="reveal mt-6 overflow-hidden flame-gradient text-primary-foreground border-0 shadow-lg shadow-orange-900/30" style={style}>
       <CardHeader>
         <CardTitle className="text-primary-foreground">GasUp Impact</CardTitle>
-        <CardDescription className="text-primary-foreground/80">
+        <CardDescription className="text-primary-foreground/75">
           What pooling has delivered across {impact.pooledOrders} pooled orders.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-3 gap-3">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-lg bg-white/15 p-3 text-center backdrop-blur-sm">
-            <m.icon className="mx-auto h-5 w-5" />
-            <p className="mt-2 font-display text-xl font-semibold leading-tight sm:text-2xl">{m.value}</p>
-            <p className="text-xs text-primary-foreground/85">{m.label}</p>
+          <div key={m.label} className="rounded-xl bg-white/[0.12] p-4 text-center backdrop-blur-sm transition-colors hover:bg-white/[0.18]">
+            <m.icon className="mx-auto h-5 w-5 opacity-90" />
+            <p className="mt-2.5 font-display text-xl font-semibold leading-tight sm:text-2xl">{m.value}</p>
+            <p className="mt-1 text-xs text-primary-foreground/75">{m.label}</p>
           </div>
         ))}
       </CardContent>
