@@ -44,7 +44,10 @@ export async function poolOrder(orderId: string): Promise<PoolResult> {
     for (const o of toAttach) {
       await tx.order.update({
         where: { id: o.id },
-        data: { poolId: pool.id, feeGhs: computeFee(o.requestedKg, pricePerKg, true).total },
+        data: {
+          poolId: pool.id,
+          feeGhs: computeFee(o.requestedKg, pricePerKg, { pooled: true, express: o.express }).total,
+        },
       });
     }
     const size = await tx.order.count({ where: { poolId: pool.id } });

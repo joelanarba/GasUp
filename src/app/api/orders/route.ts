@@ -14,6 +14,7 @@ const schema = z.object({
   hostelId: z.string().min(1).optional(),
   roomNumber: z.string().trim().min(1).optional(),
   specialInstructions: z.string().trim().max(280).optional().or(z.literal("")),
+  express: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -47,7 +48,8 @@ export async function POST(req: Request) {
   if (!supplier) return NextResponse.json({ error: "Supplier not found" }, { status: 400 });
 
   const kg = kgFor(input.cylinderSize);
-  const fee = computeFee(kg, supplier.pricePerKg);
+  const express = input.express ?? false;
+  const fee = computeFee(kg, supplier.pricePerKg, { express });
 
   const order = await prisma.order.create({
     data: {
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
       roomNumber,
       cylinderSize: input.cylinderSize,
       requestedKg: kg,
+      express,
       feeGhs: fee.total,
       specialInstructions: input.specialInstructions || null,
       status: "PENDING",

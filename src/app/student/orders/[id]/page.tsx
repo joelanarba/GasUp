@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle, Users, Navigation } from "lucide-react";
+import { ArrowLeft, MapPin, Star, ShieldCheck, AlertTriangle, Users, Navigation, Zap } from "lucide-react";
 import { DeliveryTracker } from "@/components/delivery-tracker";
 import { Badge } from "@/components/ui/badge";
 import { DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
@@ -46,7 +46,14 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
         <h1 className="font-display text-3xl font-semibold tracking-tight">
           {cylinderLabel(order.cylinderSize)} refill
         </h1>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex flex-col items-end gap-1">
+          <OrderStatusBadge status={order.status} />
+          {order.express && (
+            <Badge variant="default">
+              <Zap className="h-3 w-3" /> Express
+            </Badge>
+          )}
+        </div>
       </div>
 
       {poolSize > 1 && (

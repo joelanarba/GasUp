@@ -57,3 +57,30 @@ export async function notifyOrderEvent(event: OrderEvent, orderId: string): Prom
     console.error("[notifyOrderEvent] failed", e);
   }
 }
+
+// Proactive refill nudge — sent by the daily cron to students predicted to run
+// low with no active order. Wrapped: a failed send is logged but never throws.
+export async function sendRefillAlert(args: {
+  to: { email: string; phone: string | null };
+  name: string;
+  daysLeft: number;
+}): Promise<void> {
+  try {
+    const first = args.name.split(" ")[0];
+    const days = Math.max(0, Math.round(args.daysLeft));
+    const when =
+      days <= 0 ? "today" : days === 1 ? "in about a day" : `in about ${days} days`;
+    const link = `${APP}/student/order`;
+    const line = `Hi ${first}, you're likely to run out of gas ${when}. Order a refill now and skip the empty-cylinder scramble.`;
+    const html = `<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px">
+      <h2 style="color:#C2410C;margin:0 0 8px">GasUp</h2>
+      <p style="font-size:15px;line-height:1.5;color:#1c1917">${line}</p>
+      <p><a href="${link}" style="display:inline-block;background:#E0521E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Order a refill</a></p>
+    </div>`;
+
+    await sendEmail({ to: args.to.email, subject: "Time to refill your gas soon", html });
+    if (args.to.phone) await sendSms({ to: args.to.phone, message: `GasUp: ${line}` });
+  } catch (e) {
+    console.error("[sendRefillAlert] failed", e);
+  }
+}

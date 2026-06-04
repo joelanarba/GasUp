@@ -9,12 +9,15 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { PredictionCard } from "@/components/prediction-card";
 import { cylinderLabel } from "@/lib/cylinders";
 import { computePrediction, type Delivery } from "@/lib/prediction";
+import { SAVING_PER_POOLED_ORDER } from "@/lib/impact";
+import { formatGhs } from "@/lib/pricing";
+import { PiggyBank } from "lucide-react";
 
 export default async function StudentDashboard() {
   const user = await currentUser();
   const name = user?.name ?? "there";
 
-  const [student, activeOrder, deliveredOrders] = await Promise.all([
+  const [student, activeOrder, deliveredOrders, pooledCount] = await Promise.all([
     prisma.user.findUnique({ where: { id: user!.id } }),
     prisma.order.findFirst({
       where: { studentId: user!.id, status: { notIn: ["COMPLETED", "CANCELLED", "DISPUTED"] } },
@@ -26,7 +29,9 @@ export default async function StudentDashboard() {
       select: { deliveredAt: true, requestedKg: true, verifiedWeightKg: true },
       orderBy: { deliveredAt: "asc" },
     }),
+    prisma.order.count({ where: { studentId: user!.id, poolId: { not: null } } }),
   ]);
+  const pooledSavings = pooledCount * SAVING_PER_POOLED_ORDER;
 
   const deliveries: Delivery[] = deliveredOrders
     .filter((o) => o.deliveredAt)
@@ -75,6 +80,19 @@ export default async function StudentDashboard() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </Link>
+      )}
+
+      {pooledCount > 0 && (
+        <div
+          className="reveal mt-4 flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 p-4"
+          style={{ animationDelay: "210ms" }}
+        >
+          <PiggyBank className="h-5 w-5 text-success" />
+          <p className="text-sm">
+            <span className="font-semibold text-success">You&apos;ve saved {formatGhs(pooledSavings)}</span>{" "}
+            across {pooledCount} pooled refill{pooledCount > 1 ? "s" : ""}.
+          </p>
+        </div>
       )}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">

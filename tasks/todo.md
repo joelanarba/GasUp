@@ -91,6 +91,23 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
       (can't auth on their behalf). Everything else is prepared.
 - [x] Review section filled below.
 
+## Phase 10 — Post-MVP features (retention + monetization polish)
+- [x] **GasUp Impact**: `src/lib/impact.ts` aggregates pooled-order savings (GHS 5/order) + trips
+      reduced + estimated CO₂ (0.32kg/trip). ImpactCard headline on admin (when pooledOrders>0);
+      student savings strip. Build clean; pure presentational over already-proven groupBy data.
+- [x] **Proactive refill alerts** (Vercel Cron): `/api/cron/refill-alerts` (CRON_SECRET Bearer auth,
+      `vercel.json` daily 08:00) emails/SMS students predicted ≤3 days left with no IN-FLIGHT order.
+      VERIFIED live: empty-cylinder temp student → alerted:1 + recipient; all seeded students correctly
+      skipped. FIX: DELIVERED excluded from in-flight suppression (it's completed-refill history, not
+      gas-in-transit) — a stale un-confirmed delivery should still nudge.
+- [x] **Supplier trust score**: `src/lib/trust.ts` composite = rating (0.7, prior 0.85) + verified-fill
+      confirm rate (0.3, prior 0.9); `trust-data.ts` two groupBys. TrustBadge at supplier-pick,
+      supplier dashboard, admin suppliers table. Build clean.
+- [x] **Express refill** (premium tier): `express` Boolean on Order (migration `add_express`),
+      +GHS 8 surcharge, supplier queue `orderBy [{express:desc},{createdAt:asc}]`, Zap badge,
+      order-form toggle + fee line. VERIFIED live: express KG_6 order stored express=true,
+      feeGhs=102 (84 gas + 10 delivery + 8 express); queue sorts express first.
+
 ## Review
 
 **Built (Phases 0–8, all verified via curl + builds, committed per phase):**

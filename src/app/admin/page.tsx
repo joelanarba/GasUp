@@ -7,6 +7,9 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrdersByStatusChart, TopSuppliersChart, PoolingDonut } from "@/components/admin-reports";
+import { ImpactCard } from "@/components/impact-card";
+import { poolingImpact } from "@/lib/impact";
+import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 import { STATUS_META } from "@/lib/order-status";
@@ -15,7 +18,7 @@ export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const name = session?.user?.name ?? "Admin";
 
-  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, supplierList, recentOrders] =
+  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders] =
     await Promise.all([
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.supplier.count(),
@@ -34,6 +37,7 @@ export default async function AdminDashboard() {
         _count: { _all: true },
       }),
       prisma.order.count({ where: { poolId: { not: null } } }),
+      prisma.pool.count(),
       prisma.supplier.findMany({ orderBy: { ratingAvg: "desc" } }),
       prisma.order.findMany({
         include: { student: true, supplier: true },
@@ -60,6 +64,8 @@ export default async function AdminDashboard() {
     .sort((a, b) => b.deliveries - a.deliveries)
     .slice(0, 5);
   const completedDeliveries = bySupplier.reduce((s, b) => s + b._count._all, 0);
+  const impact = poolingImpact(pooledCount, poolCount);
+  const trustMap = await supplierTrustMap(supplierList);
 
   return (
     <DashboardShell role="ADMIN" name={name}>
@@ -79,6 +85,8 @@ export default async function AdminDashboard() {
           </Card>
         ))}
       </div>
+
+      {impact.pooledOrders > 0 && <ImpactCard impact={impact} style={{ animationDelay: "320ms" }} />}
 
       <Card className="reveal mt-6" style={{ animationDelay: "340ms" }}>
         <CardHeader>
@@ -161,23 +169,28 @@ export default async function AdminDashboard() {
                 <th className="pb-2 font-medium">Business</th>
                 <th className="pb-2 font-medium">Vehicle</th>
                 <th className="pb-2 font-medium">GHS/kg</th>
-                <th className="pb-2 text-right font-medium">Rating</th>
+                <th className="pb-2 font-medium">Rating</th>
+                <th className="pb-2 text-right font-medium">Trust</th>
               </tr>
             </thead>
             <tbody>
-              {supplierList.map((s) => (
-                <tr key={s.id} className="border-b border-border/60 last:border-0">
-                  <td className="py-2 font-medium">{s.businessName}</td>
-                  <td className="py-2 text-muted-foreground">{s.vehicleType}</td>
-                  <td className="py-2">{s.pricePerKg}</td>
-                  <td className="py-2 text-right">
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                      {s.ratingCount > 0 ? `${s.ratingAvg.toFixed(1)} (${s.ratingCount})` : "New"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {supplierList.map((s) => {
+                const t = trustMap.get(s.id);
+                return (
+                  <tr key={s.id} className="border-b border-border/60 last:border-0">
+                    <td className="py-2 font-medium">{s.businessName}</td>
+                    <td className="py-2 text-muted-foreground">{s.vehicleType}</td>
+                    <td className="py-2">{s.pricePerKg}</td>
+                    <td className="py-2">
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                        {s.ratingCount > 0 ? `${s.ratingAvg.toFixed(1)} (${s.ratingCount})` : "New"}
+                      </span>
+                    </td>
+                    <td className="py-2 text-right">{t ? `${t.score} · ${t.label}` : "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardContent>

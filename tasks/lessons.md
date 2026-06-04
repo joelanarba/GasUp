@@ -29,3 +29,9 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   that error before `$disconnect()` exhausts it ("Can't reach database server"). → Verify via
   the running app's pages, not throwaway standalone Prisma processes.
 - **react-leaflet@5 needs React 19**; on Next 14 / React 18 pin `react-leaflet@4`.
+- **`DELIVERED` is not "in flight."** When suppressing proactive refill alerts for students who
+  already have gas coming, only count not-yet-delivered statuses (PENDING/ACCEPTED/VERIFYING/
+  ON_THE_WAY). `DELIVERED` is a completed refill (the very history prediction reads from); a fresh
+  one already reads "full" so won't trigger, and a stale un-confirmed one *should* still nudge.
+  → Don't lump terminal/near-terminal lifecycle states into an "active" filter without checking
+  what each state actually means for the feature.

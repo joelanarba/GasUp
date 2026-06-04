@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Star, MapPin, Check } from "lucide-react";
+import { Loader2, Star, MapPin, Check, Zap } from "lucide-react";
 import { type CylinderSize } from "@prisma/client";
 import { CYLINDERS, kgFor } from "@/lib/cylinders";
-import { computeFee, formatGhs } from "@/lib/pricing";
+import { computeFee, formatGhs, EXPRESS_SURCHARGE } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
+import { TrustBadge } from "@/components/trust-badge";
+import { type Trust } from "@/lib/trust";
 import { cn } from "@/lib/utils";
 
 export type SupplierChoice = {
@@ -16,6 +18,7 @@ export type SupplierChoice = {
   pricePerKg: number;
   ratingAvg: number;
   ratingCount: number;
+  trust: Trust | null;
 };
 
 export function OrderForm({
@@ -29,12 +32,13 @@ export function OrderForm({
   const [size, setSize] = useState<CylinderSize>("KG_6");
   const [supplierId, setSupplierId] = useState<string>(suppliers[0]?.id ?? "");
   const [instructions, setInstructions] = useState("");
+  const [express, setExpress] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const kg = kgFor(size);
   const supplier = suppliers.find((s) => s.id === supplierId);
-  const fee = supplier ? computeFee(kg, supplier.pricePerKg) : null;
+  const fee = supplier ? computeFee(kg, supplier.pricePerKg, { express }) : null;
 
   async function place() {
     if (!supplierId) {
@@ -46,7 +50,7 @@ export function OrderForm({
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ supplierId, cylinderSize: size, specialInstructions: instructions }),
+      body: JSON.stringify({ supplierId, cylinderSize: size, specialInstructions: instructions, express }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -111,6 +115,11 @@ export function OrderForm({
                     <Star className="h-3.5 w-3.5 fill-accent text-accent" />
                     {s.ratingCount > 0 ? `${s.ratingAvg.toFixed(1)} (${s.ratingCount})` : "New"}
                   </p>
+                  {s.trust && (
+                    <div className="mt-2">
+                      <TrustBadge trust={s.trust} />
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="font-display text-lg font-semibold">{formatGhs(total)}</p>
@@ -147,6 +156,32 @@ export function OrderForm({
         />
       </section>
 
+      {/* Express toggle */}
+      <button
+        type="button"
+        onClick={() => setExpress((v) => !v)}
+        className={cn(
+          "flex w-full items-center justify-between rounded-lg border p-4 text-left transition-all",
+          express ? "border-primary bg-primary/5 shadow-warm" : "border-border bg-card hover:border-primary/40",
+        )}
+      >
+        <span className="flex items-center gap-3">
+          <Zap className={cn("h-5 w-5", express ? "text-primary" : "text-muted-foreground")} />
+          <span>
+            <span className="block font-semibold">Express refill</span>
+            <span className="block text-sm text-muted-foreground">Priority delivery · +{formatGhs(EXPRESS_SURCHARGE)}</span>
+          </span>
+        </span>
+        <span
+          className={cn(
+            "relative h-6 w-11 rounded-full transition-colors",
+            express ? "bg-primary" : "bg-muted-foreground/30",
+          )}
+        >
+          <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all", express ? "left-[1.375rem]" : "left-0.5")} />
+        </span>
+      </button>
+
       {/* Fee summary + submit */}
       {fee && (
         <section className="rounded-lg border border-border bg-card p-4">
@@ -159,6 +194,12 @@ export function OrderForm({
               <span className="text-muted-foreground">Delivery</span>
               <span>{formatGhs(fee.deliveryFee)}</span>
             </div>
+            {fee.expressSurcharge > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Express priority</span>
+                <span>{formatGhs(fee.expressSurcharge)}</span>
+              </div>
+            )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-semibold">
               <span>Total</span>
               <span>{formatGhs(fee.total)}</span>

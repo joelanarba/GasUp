@@ -107,6 +107,7 @@ model Order {
   cylinderSize    CylinderSize
   requestedKg     Float
   status          OrderStatus  @default(PENDING)
+  express         Boolean      @default(false) // premium tier: surcharge + queue priority
 
   // trust layer
   verifiedWeightKg Float?      // what supplier says they filled

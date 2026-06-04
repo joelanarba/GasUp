@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { OrderForm, type SupplierChoice } from "@/components/order-form";
+import { supplierTrustMap } from "@/lib/trust-data";
 
 export default async function NewOrderPage() {
   const user = await currentUser();
@@ -17,6 +18,7 @@ export default async function NewOrderPage() {
     }),
   ]);
 
+  const trust = await supplierTrustMap(suppliers);
   const choices: SupplierChoice[] = suppliers.map((s) => ({
     id: s.id,
     businessName: s.businessName,
@@ -24,6 +26,7 @@ export default async function NewOrderPage() {
     pricePerKg: s.pricePerKg,
     ratingAvg: s.ratingAvg,
     ratingCount: s.ratingCount,
+    trust: trust.get(s.id) ?? null,
   }));
 
   const deliverTo =

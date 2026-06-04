@@ -1,4 +1,4 @@
-import { Inbox, Truck, Star, MapPin, Users } from "lucide-react";
+import { Inbox, Truck, Star, MapPin, Users, Zap } from "lucide-react";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrderActions } from "@/components/order-actions";
 import { VerifyFillForm } from "@/components/verify-fill-form";
+import { TrustBadge } from "@/components/trust-badge";
+import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 import { type Prisma } from "@prisma/client";
@@ -20,6 +22,7 @@ export default async function SupplierDashboard() {
   const name = user?.name ?? "there";
 
   const supplier = await prisma.supplier.findUnique({ where: { userId: user!.id } });
+  const trust = supplier ? (await supplierTrustMap([supplier])).get(supplier.id) ?? null : null;
   if (!supplier) {
     return (
       <DashboardShell role="SUPPLIER" name={name}>
@@ -38,7 +41,7 @@ export default async function SupplierDashboard() {
       hostel: true,
       pool: { include: { _count: { select: { orders: true } } } },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ express: "desc" }, { createdAt: "asc" }],
   });
   const incoming = orders.filter((o) => o.status === "PENDING");
   const active = orders.filter((o) => o.status !== "PENDING");
@@ -50,11 +53,12 @@ export default async function SupplierDashboard() {
           <p className="text-sm font-medium text-muted-foreground">{supplier.businessName}</p>
           <h1 className="font-display text-3xl font-semibold tracking-tight">{name.split(" ")[0]}</h1>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-1">
           <Badge variant="success">
             <Truck className="h-3 w-3" /> {supplier.availability}
           </Badge>
-          <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
+          {trust && <TrustBadge trust={trust} />}
+          <p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-3.5 w-3.5 fill-accent text-accent" />
             {supplier.ratingCount > 0 ? `${supplier.ratingAvg.toFixed(1)} (${supplier.ratingCount})` : "New"}
           </p>
@@ -114,6 +118,11 @@ function SupplierOrderCard({ order }: { order: QueueOrder }) {
         </div>
         <div className="flex flex-col items-end gap-1">
           <OrderStatusBadge status={order.status} />
+          {order.express && (
+            <Badge variant="default">
+              <Zap className="h-3 w-3" /> Express
+            </Badge>
+          )}
           {order.pool && order.pool._count.orders > 1 && (
             <Badge variant="accent">
               <Users className="h-3 w-3" /> Pooled · {order.pool._count.orders} stops
