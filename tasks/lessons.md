@@ -35,3 +35,14 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   one already reads "full" so won't trigger, and a stale un-confirmed one *should* still nudge.
   → Don't lump terminal/near-terminal lifecycle states into an "active" filter without checking
   what each state actually means for the feature.
+- **A schema refactor MUST get a migration.** The hostel/room → free-form address+lat/lng refactor
+  changed `schema.prisma` and the code, but no migration was ever generated. The Neon DB is still on
+  `init`+`add_express` (old `Hostel`/`hostelId`/`roomNumber` model), so a *fresh* Prisma client throws
+  `P2022: column User.defaultAddress does not exist`. A long-running `next dev` masks this because the
+  global PrismaClient singleton keeps a stale in-memory client. → After ANY `schema.prisma` edit run
+  `prisma migrate dev` and verify against the **deploy** DB; never trust a running dev server to prove
+  the DB matches the schema. Confirm with a throwaway `prisma generate` + a fresh query.
+- **Don't trust a Windows git-status snapshot.** With `core.autocrlf=true` and no `.gitattributes`,
+  `git status` lists files as modified purely from CRLF stat-noise (zero real diff). Run `git diff HEAD`
+  to see actual content changes; `git status` reports clean again once a diff refreshes the stat cache.
+  → Verify "uncommitted work" with `git diff HEAD --stat`, not the status list alone.

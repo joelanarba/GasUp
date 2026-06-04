@@ -80,7 +80,7 @@ export function Footer() {
         {/* Bottom divider */}
         <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-border/40 pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            University of Cape Coast · Entrepreneurship Project · 2024
+            University of Cape Coast · Entrepreneurship Project · {new Date().getFullYear()}
           </p>
           <p className="text-xs text-muted-foreground">GasUp</p>
         </div>

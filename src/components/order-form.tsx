@@ -275,7 +275,7 @@ export function OrderForm({
         {busy ? "Placing order…" : "Place order"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Payment with Paystack arrives in a later build — orders are created unpaid for now.
+        Pay securely with Paystack on your order page next — or settle on delivery.
       </p>
     </div>
   );

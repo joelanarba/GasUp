@@ -128,3 +128,25 @@ layering the differentiators. Mark items `[x]` as completed and add a short note
 **Known gaps / next:** final Vercel deploy pending the user's login; SMS only sends if a real
 mNotify key is set (degrades gracefully otherwise); proof photos stored as small data URLs
 (fine for the demo; object storage would be the production choice).
+
+## Phase 11 — Full audit + polish
+
+Independent audit of the whole repo (every route/page/component/service verified, not trusting
+phase markers). `tsc --noEmit` clean; live server pages 200; auth gating 307→/login verified.
+
+- [x] **Admin supplier management** — `POST /api/admin/suppliers` (admin-only, zod, 401/403/400/409/201)
+      + `AddSupplier` form on the admin dashboard. Closes the SRS "admin-creates suppliers" gap.
+      No schema change (uses existing User+Supplier). VERIFIED via authed curl: guard 401, login,
+      validation 400, duplicate 409, create 201, re-create 409 (persisted).
+- [x] **Copy fixes:** removed stale "payment arrives in a later build" note from the order form
+      (Paystack is live); aligned FAQ + suppliers-section trust tiers to the real labels
+      (Excellent/Trusted/Fair/Watch, not Gold/Silver/Bronze); fixed FAQ payment phrasing.
+- [x] **Supplier CTA fix:** landing "Become a supplier" pointed at `/register` (students only →
+      silently made a student account). Now "Partner with us" (mailto), matching admin onboarding.
+- [x] **Footer year** made dynamic.
+- [ ] **CRITICAL — DB schema drift (needs decision):** the Neon DB is on `init`+`add_express`
+      (old hostel/room model); the code + `schema.prisma` use the address+lat/lng model with no
+      migration for the refactor. Fresh Prisma client → `P2022`. Fix: generate the missing migration
+      + reset/reseed the DB (destructive on demo data) so the deployed app's student/order/pooling
+      flows work. Pending user approval (shared/prod DB).
+- [ ] (optional) Admin dispute resolution action; supplier availability toggle; pitch-deck artifact.

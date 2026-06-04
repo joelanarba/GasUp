@@ -28,7 +28,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "How do I pay for my refill?",
-    a: "We support mobile money (MTN MoMo, Vodafone Cash, AirtelTigo Money) through Paystack. You pay when you place the order, and the receipt sits in your order history.",
+    a: "We support mobile money (MTN MoMo, Vodafone Cash, AirtelTigo Money) and cards through Paystack. Pay from your order page right after checkout — or settle on delivery — and the receipt sits in your order history.",
   },
   {
     q: "What if the delivered gas weighs less than I ordered?",
@@ -36,7 +36,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "How are suppliers rated?",
-    a: "After each delivery, you rate the supplier on a 5-star scale. We also factor in their fill-weight accuracy and dispute history to compute a trust score: Gold, Silver, or Bronze. You always see these scores when choosing a supplier.",
+    a: "After each delivery, you rate the supplier on a 5-star scale. We also factor in their fill-weight accuracy and dispute history into a single trust score — ranked Excellent, Trusted, Fair, or Watch — shown on every supplier so you always know who's reliable before you choose.",
   },
 ];
 

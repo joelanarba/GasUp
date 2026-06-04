@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { TrendingUp, Shield, Route, Star, ArrowRight } from "lucide-react";
 import { ScrollReveal } from "./scroll-reveal";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ const benefits = [
   {
     Icon: Shield,
     title: "Build your reputation",
-    body: "Your trust score — based on fill accuracy, ratings, and dispute history — is visible to every student. Gold suppliers get picked first.",
+    body: "Your trust score — based on fill accuracy, ratings, and dispute history — is visible to every student. Top-rated suppliers get picked first.",
   },
   {
     Icon: Route,
@@ -83,10 +82,13 @@ export function SuppliersSection() {
 
             <ScrollReveal delay={400}>
               <Button asChild size="lg" className="mt-8">
-                <Link href="/register">
-                  Become a supplier <ArrowRight className="h-4 w-4" />
-                </Link>
+                <a href="mailto:suppliers@gasup.app?subject=GasUp%20supplier%20partnership">
+                  Partner with us <ArrowRight className="h-4 w-4" />
+                </a>
               </Button>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Suppliers are onboarded by the GasUp team — reach out and we&apos;ll set up your account.
+              </p>
             </ScrollReveal>
           </div>
         </div>

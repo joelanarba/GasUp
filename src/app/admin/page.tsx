@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrdersByStatusChart, TopSuppliersChart, PoolingDonut } from "@/components/admin-reports";
 import { ImpactCard } from "@/components/impact-card";
+import { AddSupplier } from "@/components/new-supplier-form";
 import { poolingImpact } from "@/lib/impact";
 import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
@@ -178,7 +179,9 @@ export default async function AdminDashboard() {
             Suppliers
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
+          <AddSupplier />
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 text-left text-muted-foreground">
@@ -209,6 +212,7 @@ export default async function AdminDashboard() {
               })}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 
