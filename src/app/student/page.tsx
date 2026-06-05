@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag, History, ChevronRight, PackageOpen, ArrowRight } from "lucide-react";
+import { ShoppingBag, History, ChevronRight, ArrowRight, Gauge } from "lucide-react";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -7,17 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { PredictionCard } from "@/components/prediction-card";
-import { cylinderLabel } from "@/lib/cylinders";
-import { computePrediction, type Delivery } from "@/lib/prediction";
-import { SAVING_PER_POOLED_ORDER } from "@/lib/impact";
-import { formatGhs } from "@/lib/pricing";
-import { PiggyBank } from "lucide-react";
+import { SavingsCard } from "@/components/savings-card";
+import { cylinderLabel, kgFor } from "@/lib/cylinders";
+import { computePrediction, estimateFromProfile, type Delivery } from "@/lib/prediction";
 
 export default async function StudentDashboard() {
   const user = await currentUser();
   const name = user?.name ?? "there";
 
-  const [student, activeOrder, deliveredOrders, pooledCount] = await Promise.all([
+  const [student, activeOrder, deliveredOrders, pooledCount, totalOrders] = await Promise.all([
     prisma.user.findUnique({ where: { id: user!.id } }),
     prisma.order.findFirst({
       where: { studentId: user!.id, status: { notIn: ["COMPLETED", "CANCELLED", "DISPUTED"] } },
@@ -30,13 +28,24 @@ export default async function StudentDashboard() {
       orderBy: { deliveredAt: "asc" },
     }),
     prisma.order.count({ where: { studentId: user!.id, poolId: { not: null } } }),
+    prisma.order.count({ where: { studentId: user!.id } }),
   ]);
-  const pooledSavings = pooledCount * SAVING_PER_POOLED_ORDER;
 
   const deliveries: Delivery[] = deliveredOrders
     .filter((o) => o.deliveredAt)
     .map((o) => ({ deliveredAt: o.deliveredAt as Date, kg: o.verifiedWeightKg ?? o.requestedKg }));
-  const prediction = computePrediction(deliveries, student?.householdSize ?? 1);
+
+  const household = student?.householdSize ?? 1;
+  let prediction = computePrediction(deliveries, household);
+  // Day-One: no real history yet, but the student gave us a gas profile at setup.
+  const fromProfile = !prediction.hasData && !!student?.defaultCylinderSize;
+  if (fromProfile && student?.defaultCylinderSize) {
+    prediction = estimateFromProfile(
+      kgFor(student.defaultCylinderSize),
+      household,
+      student.lastRefillAt ?? null,
+    );
+  }
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -50,23 +59,33 @@ export default async function StudentDashboard() {
 
       <div className="reveal mt-6" style={{ animationDelay: "120ms" }}>
         {prediction.hasData ? (
-          <PredictionCard prediction={prediction} />
+          <PredictionCard
+            prediction={prediction}
+            fromProfile={fromProfile}
+            snoozedUntil={student?.refillSnoozedUntil ?? null}
+          />
         ) : (
+          // Day-One: no history and no profile yet — prompt the quick setup.
           <Card className="overflow-hidden gradient-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
-                  <PackageOpen className="h-4 w-4 text-primary" />
+                  <Gauge className="h-4 w-4 text-primary" />
                 </span>
-                Your gas level
+                Get your gas prediction
               </CardTitle>
-              <CardDescription>We&apos;ll predict your refill once you&apos;ve had one delivery.</CardDescription>
+              <CardDescription>
+                Set up your cylinder in ~20 seconds and we&apos;ll estimate your refill before you run out.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button asChild className="w-full">
-                <Link href="/student/order">
-                  Order your first refill <ArrowRight className="h-4 w-4" />
+                <Link href="/student/setup">
+                  Set up my gas <ArrowRight className="h-4 w-4" />
                 </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/student/order">Skip — just order a refill</Link>
               </Button>
             </CardContent>
           </Card>
@@ -90,20 +109,9 @@ export default async function StudentDashboard() {
         </Link>
       )}
 
-      {pooledCount > 0 && (
-        <div
-          className="reveal mt-4 flex items-center gap-3 rounded-xl border border-success/25 bg-success/[0.04] p-4 shadow-sm"
-          style={{ animationDelay: "210ms" }}
-        >
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-success/12">
-            <PiggyBank className="h-4 w-4 text-success" />
-          </span>
-          <p className="text-sm">
-            <span className="font-semibold text-success">You&apos;ve saved {formatGhs(pooledSavings)}</span>{" "}
-            across {pooledCount} pooled refill{pooledCount > 1 ? "s" : ""}.
-          </p>
-        </div>
-      )}
+      <div className="reveal mt-4" style={{ animationDelay: "210ms" }}>
+        <SavingsCard pooledCount={pooledCount} totalOrders={totalOrders} />
+      </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card className="reveal hover-lift" style={{ animationDelay: "240ms" }}>

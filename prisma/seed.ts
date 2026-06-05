@@ -139,6 +139,8 @@ async function main() {
         defaultLat: loc.lat,
         defaultLng: loc.lng,
         householdSize: spec.householdSize,
+        defaultCylinderSize: spec.size,
+        lastRefillAt: daysAgo(spec.history[spec.history.length - 1]),
       },
       create: {
         email: spec.email,
@@ -149,6 +151,8 @@ async function main() {
         defaultAddress: loc.name,
         defaultLat: loc.lat,
         defaultLng: loc.lng,
+        defaultCylinderSize: spec.size,
+        lastRefillAt: daysAgo(spec.history[spec.history.length - 1]),
         passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10),
       },
     });

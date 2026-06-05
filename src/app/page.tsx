@@ -12,6 +12,7 @@ import { CO2ImpactSection } from "@/components/landing/co2-impact-section";
 import { TrustSection } from "@/components/landing/trust-section";
 import { CampusSection } from "@/components/landing/campus-section";
 import { SuppliersSection } from "@/components/landing/suppliers-section";
+import { RoadmapSection } from "@/components/landing/roadmap-section";
 import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
@@ -33,6 +34,7 @@ export default async function LandingPage() {
         <TrustSection />
         <CampusSection />
         <SuppliersSection />
+        <RoadmapSection />
         <FaqSection />
         <CtaSection />
       </main>

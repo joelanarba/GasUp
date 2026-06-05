@@ -60,6 +60,11 @@ model User {
   defaultLng     Float?
   householdSize  Int      @default(1) // seeds the burn-rate model
 
+  // onboarding "gas profile" → powers Day-One prediction before any real refill history
+  defaultCylinderSize CylinderSize? // their usual cylinder size
+  lastRefillAt        DateTime?     // when they last refilled (their estimate)
+  refillSnoozedUntil  DateTime?     // "remind me tomorrow" — mutes the low-gas nudge + cron until then
+
   // supplier profile (1:1) if role == SUPPLIER
   supplier     Supplier?
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, PackageOpen } from "lucide-react";
+import { ArrowLeft, ChevronRight, PackageOpen, Users } from "lucide-react";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -7,6 +7,7 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { Button } from "@/components/ui/button";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
+import { SAVING_PER_POOLED_ORDER } from "@/lib/impact";
 
 export default async function StudentOrdersPage() {
   const user = await currentUser();
@@ -59,6 +60,11 @@ export default async function StudentOrdersPage() {
                     {o.supplier?.businessName ?? "Awaiting supplier"} ·{" "}
                     {o.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </p>
+                  {o.poolId && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
+                      <Users className="h-3 w-3" /> Pooled · saved {formatGhs(SAVING_PER_POOLED_ORDER)}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-display font-semibold">{formatGhs(o.feeGhs)}</span>

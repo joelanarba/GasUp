@@ -154,3 +154,30 @@ phase markers). `tsc --noEmit` clean; live server pages 200; auth gating 307→/
       `/supplier` `/admin`) where they previously 500'd. Migration committed so `migrate deploy`
       reproduces it on Vercel.
 - [ ] (optional) Admin dispute resolution action; supplier availability toggle; pitch-deck artifact.
+
+## Phase 12 — Enhancement sprint (retention + business-viability polish)
+
+Approved 2026-06-04 (brainstorm + 2 decisions: onboarding = a **separate setup step**;
+DB = **additive nullable migration**). Strengthens prediction/trust/pooling for the demo
+and the entrepreneurship grade. All reuses existing engines — no architecture changes.
+
+- [x] **Migration `add_onboarding_prediction`** — User gains nullable `defaultCylinderSize`,
+      `lastRefillAt`, `refillSnoozedUntil`. Verified additive (3 `ADD COLUMN`, no drops/reset);
+      applied to Neon + committed so `migrate deploy` reproduces it on Vercel.
+- [x] **Day-One prediction** — `estimateFromProfile()` reuses `computePrediction` (method
+      "estimate"). `/student/setup` form → `POST /api/student/gas-profile`. Empty state → setup CTA.
+      VERIFIED e2e: register→setup CTA→gas-profile(200)→dashboard shows "Estimated from your setup".
+- [x] **Student savings card** — `SavingsCard` on `/student`: total saved (GHS 5×pooled, real),
+      pooled orders, est. trips reduced (labeled), avg saved/refill; encouraging zero-state.
+      VERIFIED both states (zero for new student; 3 tiles populated after akua pooled).
+- [x] **Dynamic pooling breakdown** — `PoolSavings` (pool size / original / discount / you pay /
+      saved) on order detail; "Pooled · saved GHS 5" badge on history; honest hint on order form.
+      VERIFIED e2e: 2nd same-block order returned `pooled:true,savings:5`; breakdown + badge render.
+- [x] **Smart refill actions** — prediction card (low/empty) → "Order refill" + "Remind me
+      tomorrow" → `POST /api/student/refill-reminder` sets `refillSnoozedUntil`; cron respects it.
+      VERIFIED: snooze(200)→dashboard shows "remind you tomorrow" + "Order now anyway".
+- [x] **Landing roadmap** — static `RoadmapSection` ("Phase 2 Innovations", 5 coming-soon cards) +
+      nav link. No backend, no schema. VERIFIED: all 5 items + pills render on `/`.
+- [x] **Verify** — `tsc --noEmit` clean; `next build` passes (21 routes); `next lint` clean; e2e
+      curl flows (day-one, pooling, snooze) all 200; no regressions (/ /login /supplier /admin 200;
+      seeded student history-prediction intact). Test rows cleaned; idempotent re-seed re-run clean.

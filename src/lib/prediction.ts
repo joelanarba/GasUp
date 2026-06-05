@@ -94,6 +94,28 @@ export function computePrediction(
   };
 }
 
+/**
+ * Day-One prediction. Before a student has any real refill history, build an
+ * estimate from their onboarding "gas profile": usual cylinder size, household
+ * size, and their best guess at when they last refilled. We synthesise a single
+ * virtual refill and run it through the SAME engine, so it reads as method
+ * "estimate" and is automatically superseded once a real delivery lands.
+ *
+ * No last-refill date → assume a fresh fill (today): an honest "full, ~N days"
+ * baseline rather than fake precision.
+ */
+export function estimateFromProfile(
+  cylinderKg: number,
+  householdSize: number,
+  lastRefillAt: Date | null,
+  now: Date = new Date(),
+): Prediction {
+  if (!cylinderKg || cylinderKg <= 0) return { hasData: false };
+  const deliveredAt =
+    lastRefillAt && lastRefillAt.getTime() <= now.getTime() ? lastRefillAt : now;
+  return computePrediction([{ deliveredAt, kg: cylinderKg }], householdSize, now);
+}
+
 export function levelCopy(level: PredictionLevel): { headline: string; tone: string } {
   switch (level) {
     case "empty":

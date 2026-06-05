@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { computePrediction, type Delivery } from "@/lib/prediction";
+import { computePrediction, estimateFromProfile, type Delivery } from "@/lib/prediction";
+import { kgFor } from "@/lib/cylinders";
 import { sendRefillAlert } from "@/lib/services/notifications";
 
 // Daily proactive refill nudge — the prediction differentiator, automated.
@@ -34,6 +35,9 @@ export async function GET(req: Request) {
       email: true,
       phone: true,
       householdSize: true,
+      defaultCylinderSize: true,
+      lastRefillAt: true,
+      refillSnoozedUntil: true,
       orders: {
         where: { deliveredAt: { not: null } },
         select: { deliveredAt: true, requestedKg: true, verifiedWeightKg: true },
@@ -47,11 +51,24 @@ export async function GET(req: Request) {
   const recipients: string[] = [];
 
   for (const s of students) {
+    // Respect "remind me tomorrow" — don't nudge a snoozed student.
+    if (s.refillSnoozedUntil && s.refillSnoozedUntil.getTime() > now.getTime()) continue;
+
     const deliveries: Delivery[] = s.orders
       .filter((o) => o.deliveredAt)
       .map((o) => ({ deliveredAt: o.deliveredAt as Date, kg: o.verifiedWeightKg ?? o.requestedKg }));
 
-    const prediction = computePrediction(deliveries, s.householdSize ?? 1, now);
+    let prediction = computePrediction(deliveries, s.householdSize ?? 1, now);
+    // Day-One: fall back to the onboarding gas profile when there's no real
+    // history yet, so new students get proactive nudges too.
+    if (!prediction.hasData && s.defaultCylinderSize) {
+      prediction = estimateFromProfile(
+        kgFor(s.defaultCylinderSize),
+        s.householdSize ?? 1,
+        s.lastRefillAt ?? null,
+        now,
+      );
+    }
     if (!prediction.hasData || prediction.daysLeft > ALERT_DAYS_LEFT) continue;
 
     // Skip students who already have an order in flight (gas is on the way).

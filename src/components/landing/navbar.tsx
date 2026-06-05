@@ -9,6 +9,7 @@ import { Brand } from "@/components/brand";
 const navLinks = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
+  { label: "Roadmap", href: "#roadmap" },
   { label: "About", href: "#about" },
 ] as const;
 

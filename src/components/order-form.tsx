@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Star, MapPin, Check, Zap } from "lucide-react";
+import { Loader2, Star, MapPin, Check, Zap, Users } from "lucide-react";
 import { type CylinderSize } from "@prisma/client";
 import { CYLINDERS, kgFor } from "@/lib/cylinders";
-import { computeFee, formatGhs, EXPRESS_SURCHARGE } from "@/lib/pricing";
+import { computeFee, formatGhs, EXPRESS_SURCHARGE, DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { TrustBadge } from "@/components/trust-badge";
 import { type Trust } from "@/lib/trust";
@@ -241,6 +241,20 @@ export function OrderForm({
           <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all", express ? "left-[1.375rem]" : "left-0.5")} />
         </span>
       </button>
+
+      {/* Pooling hint — pooling is matched server-side after you place the order */}
+      <div className="flex items-start gap-3 rounded-lg border border-success/25 bg-success/[0.05] p-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-success/12">
+          <Users className="h-4 w-4 text-success" />
+        </span>
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">Pooling can halve your delivery fee.</span>{" "}
+          If a neighbour orders from this supplier near you within 90 minutes, delivery drops from{" "}
+          {formatGhs(DELIVERY_FEE_SOLO)} to{" "}
+          <span className="font-semibold text-success">{formatGhs(DELIVERY_FEE_POOLED)}</span> —
+          automatically, right after you place your order.
+        </p>
+      </div>
 
       {/* Fee summary + submit */}
       {fee && (
