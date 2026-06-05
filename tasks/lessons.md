@@ -46,3 +46,9 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   `git status` lists files as modified purely from CRLF stat-noise (zero real diff). Run `git diff HEAD`
   to see actual content changes; `git status` reports clean again once a diff refreshes the stat cache.
   → Verify "uncommitted work" with `git diff HEAD --stat`, not the status list alone.
+- **"Use my location" must reverse-geocode, not just drop a pin.** The GPS button only set the map
+  pin's lat/lng; it never filled the "Delivery address" text, which the order form requires (`!address.trim()`
+  blocks submit). So GPS "did nothing" and students were forced to type. → When coordinates feed a form
+  that also needs a human-readable address, reverse-geocode them (server route → Nominatim, graceful
+  fallback) to auto-fill the field. Also always *render* the geolocation denied/unsupported/error states —
+  a silent failure reads to the user as "broken."

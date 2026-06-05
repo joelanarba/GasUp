@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Loader2, LocateFixed, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -35,15 +35,43 @@ export function LocationPicker({
     value?.lat && value?.lng ? { lat: value.lat, lng: value.lng } : null
   );
   const [geo, setGeo] = useState<GeoState>("idle");
+  const [geocoding, setGeocoding] = useState(false);
+
+  // Don't clobber an address the student typed/saved themselves. An explicit
+  // "Use my location" click overrides this; passive pin drags respect it.
+  const manuallyEdited = useRef<boolean>(!!value?.address);
+  // Guard so a slow reverse-geocode response can't overwrite a newer one.
+  const reqId = useRef(0);
 
   const center: [number, number] = pos
     ? [pos.lat, pos.lng]
     : [CAMPUS_CENTER.lat, CAMPUS_CENTER.lng];
 
   useEffect(() => {
-    onChange({ address: address, lat: pos?.lat ?? null, lng: pos?.lng ?? null });
+    onChange({ address, lat: pos?.lat ?? null, lng: pos?.lng ?? null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, pos]);
+
+  // Turn coordinates into a readable address and fill the field. `force` is set
+  // for explicit "Use my location" clicks so they win over a stale typed value.
+  async function reverseGeocode(lat: number, lng: number, force: boolean) {
+    if (manuallyEdited.current && !force) return;
+    const id = ++reqId.current;
+    setGeocoding(true);
+    try {
+      const r = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+      const data = (await r.json().catch(() => ({}))) as { address?: string | null };
+      if (id !== reqId.current) return; // a newer request superseded this one
+      if (data.address && (force || !manuallyEdited.current)) {
+        manuallyEdited.current = false;
+        setAddress(data.address);
+      }
+    } catch {
+      /* leave the field for manual entry */
+    } finally {
+      if (id === reqId.current) setGeocoding(false);
+    }
+  }
 
   function locate() {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
@@ -53,8 +81,10 @@ export function LocationPicker({
     setGeo("locating");
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setPos({ lat: p.coords.latitude, lng: p.coords.longitude });
+        const { latitude, longitude } = p.coords;
+        setPos({ lat: latitude, lng: longitude });
         setGeo("ok");
+        reverseGeocode(latitude, longitude, true);
       },
       (err) => setGeo(err.code === err.PERMISSION_DENIED ? "denied" : "error"),
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 },
@@ -63,6 +93,7 @@ export function LocationPicker({
 
   function pick(lat: number, lng: number) {
     setPos({ lat, lng });
+    reverseGeocode(lat, lng, false);
   }
 
   useEffect(() => {
@@ -102,14 +133,35 @@ export function LocationPicker({
             <Input
               id="lp-address"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                manuallyEdited.current = true;
+                setAddress(e.target.value);
+              }}
               placeholder="e.g. Science Market, near the blue gate"
               className="pl-10 h-11"
             />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Type your full address. Drag the pin on the map to mark your exact location for the rider.
-          </p>
+          {geocoding ? (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Finding your address…
+            </p>
+          ) : geo === "denied" ? (
+            <p className="mt-2 text-xs text-destructive">
+              Location is blocked for this site. Allow it in your browser and tap “Use my location” again — or just type your address below.
+            </p>
+          ) : geo === "unsupported" ? (
+            <p className="mt-2 text-xs text-destructive">
+              Your browser can’t share location — type your address below and drag the pin.
+            </p>
+          ) : geo === "error" ? (
+            <p className="mt-2 text-xs text-destructive">
+              Couldn’t get your location. Try “Use my location” again, or type your address below.
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Tap “Use my location” to fill this automatically, then add a landmark. Drag the pin to mark your exact spot for the rider.
+            </p>
+          )}
         </div>
       </div>
     </div>
