@@ -17,7 +17,7 @@ const trustPoints: TrustPoint[] = [
   },
   {
     Icon: Star,
-    title: "Supplier trust scores",
+    title: "Rider trust scores",
     description:
       "Ratings, fill accuracy, and dispute history combined into one score",
   },
@@ -53,7 +53,7 @@ export function TrustSection() {
               <p className="mt-4 leading-relaxed text-neutral-500">
                 We built GasUp around one principle: you should never wonder
                 whether you got your full gas. Every delivery is weighed, every
-                supplier is scored, and every dispute is resolved.
+                rider is scored, and every dispute is resolved.
               </p>
 
               {/* Trust points list */}

@@ -5,8 +5,9 @@ import { currentUser } from "@/lib/session";
 import { transition, type OrderAction } from "@/lib/order-status";
 import { notifyOrderEvent } from "@/lib/services/notifications";
 
+// "accept" is handled atomically by /accept (pool + race); "verify" has its own route.
 const schema = z.object({
-  action: z.enum(["accept", "reject", "confirm", "dispute", "advance", "cancel", "complete"]),
+  action: z.enum(["confirm", "dispute", "advance", "cancel", "complete"]),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

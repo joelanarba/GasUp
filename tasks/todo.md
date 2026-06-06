@@ -181,3 +181,113 @@ and the entrepreneurship grade. All reuses existing engines — no architecture 
 - [x] **Verify** — `tsc --noEmit` clean; `next build` passes (21 routes); `next lint` clean; e2e
       curl flows (day-one, pooling, snooze) all 200; no regressions (/ /login /supplier /admin 200;
       seeded student history-prediction intact). Test rows cleaned; idempotent re-seed re-run clean.
+
+## Phase 13 — On-demand dispatch refactor (teammate feedback)
+
+Five changes from teammate feedback. The headline is item 1: students stop picking a rider; orders
+**broadcast** to a live rider dispatch board and the first rider to accept claims them. Work items in
+order (1→5) — they build on each other. **Schema/migrations are grouped first with a checkpoint** (per
+the working agreement: check in after migrations, before building UI on top of them).
+
+**Decisions locked (user, 2026-06-06):**
+- **Dispatch board geo →** add a nullable rider base location (`Supplier.lat/lng`); compute real
+  haversine distance rider→order; sort available orders by distance then age; show ALL open campus
+  orders (no hard coverage cutoff — campus is tiny).
+- **Pool claim →** accepting any OPEN order in a pool atomically assigns ALL its OPEN members to that
+  rider as one multi-stop trip (keeps the pooled-fee economics honest = genuinely one trip).
+
+**Held constant (no change):** prediction engine (reads `verifiedWeightKg`/`deliveredAt`), trust layer,
+Postgres+Prisma, `lib/services/*` wrappers + ServiceLog, mobile-first amber aesthetic. **Express tier
+kept** (surcharge unchanged; on the board express sorts first, then distance, then age). The Prisma
+model stays named `Supplier` internally — only user-facing copy changes to "Rider" (item 4).
+
+### 13.0 — Schema + migrations (DONE ✅ — checkpoint signed off)
+All additive/non-destructive — no DB reset needed (existing DELIVERED seed rows are unaffected).
+Split into two migrations to dodge the PG "unsafe use of new enum value in same transaction" rule.
+- [x] `OrderStatus`: added `OPEN`. Kept `PENDING` as legacy/no-op. (`supplierId` already nullable ✓.)
+      NOTE: Prisma appended `OPEN` to the end of the PG enum (no `BEFORE` clause); harmless — lifecycle
+      order is driven by `ORDER_TIMELINE` in code, nothing relies on the enum's internal sort.
+- [x] `Supplier`: added nullable `lat`, `lng` (rider base location) + `partnerStation`.
+- [x] New `PaymentMethod` enum `ONLINE | CASH_ON_DELIVERY`; `Order.paymentMethod` default `ONLINE`.
+- [x] New `ApplicationStatus` enum + `RiderApplication` table.
+- [x] Migration 1 `20260606124108_add_dispatch_open_and_extras` (additive, OPEN added not defaulted);
+      Migration 2 `20260606124213_order_default_open` (`Order.status` default → OPEN). Both applied to
+      Neon; client regenerated; `migrate status` → "Database schema is up to date!" (6 migrations).
+- [x] **CHECKPOINT: migrations written + applied + verified — checking in with user before building UI.**
+
+### 13.1 — Item 1: core order flow (students don't pick riders) — HEADLINE ✅
+- [x] `pricing.ts`: `GAS_PRICE_PER_KG = 14` + `RIDER_CUT = 0.75`; `computeFee(kg, opts)` now uses the
+      platform gas price (signature changed — dropped per-rider `pricePerKg`); `riderEarn({pooled})` helper.
+- [x] `order-status.ts`: `accept` OPEN→ACCEPTED; `cancel` OPEN||ACCEPTED; `ORDER_TIMELINE[0]=OPEN`;
+      `STATUS_META.OPEN = "Finding a rider"`; removed rider accept/reject from `availableActions` (board
+      handles accept); dropped the `reject` action entirely.
+- [x] `POST /api/orders`: creates `supplierId: null`, `status OPEN`, fee = platform gas + solo delivery.
+- [x] `order-form.tsx` + `student/order/page.tsx`: rider list/`SupplierChoice` fully removed.
+- [x] `pooling.ts`: pools by location + time only (no supplier); re-prices via `GAS_PRICE_PER_KG`. Extracted
+      `distanceMeters`/`formatDistance` to new `src/lib/geo.ts` (shared with the board).
+- [x] **Atomic claim** `POST /api/orders/[id]/accept`: `$transaction`, guarded `updateMany` (count→409 on
+      race), claims all still-OPEN pool members. VERIFIED: 200 then 409; pool claim returned `claimed:2`.
+- [x] `supplier/page.tsx` → **dispatch board**: groups OPEN orders into trips (one card per pool/solo),
+      real haversine distance from rider base, sorted express→distance→age, estimated earn, Accept button.
+- [x] Order-detail timeline shows "Finding a rider" for OPEN (VERIFIED in smoke test).
+
+### 13.2 — Item 2: pay on delivery / cash ✅
+- [x] Order form payment-method toggle (ONLINE default / CASH_ON_DELIVERY); persisted on the order.
+- [x] Order detail: ONLINE → `PayButton`; CASH → "Cash on delivery" badge + "pay in cash on delivery" note.
+- [x] Rider active card: `CashPaidButton` for CASH+UNPAID → `POST /api/orders/[id]/cash-paid`
+      (rider-owns + cash + unpaid → PAID; no Paystack).
+
+### 13.3 — Item 3: partial fill / custom amount ✅
+- [x] Order form "How much gas?" toggle: Full / Custom with synced GHS↔kg inputs (÷×`GAS_PRICE_PER_KG`),
+      clamped [1 kg, cylinder capacity] + "rider will fill exactly this amount" note.
+- [x] `POST /api/orders` validates custom `requestedKg` (≥1, ≤ cylinder kg). Prediction unchanged.
+
+### 13.4 — Item 4: terminology "Supplier" → "Rider" (copy only) ✅
+- [x] Rider copy across: supplier dashboard (rebuilt), order detail ("Rider" row), `STATUS_META`,
+      `notifications.ts`, `dashboard-shell` role label, and landing (how-it-works, suppliers-section, faq +
+      new "Do I choose my rider?" Q, trust, roadmap, campus). Prisma model/identifiers untouched.
+- [x] Admin "Suppliers" → "Riders" (stat, table heading, recent-orders column, reports labels);
+      GHS/kg → "Cost/kg" (now internal cost).
+- [x] `partnerStation` surfaced — **DEVIATION** from spec wording: the spec said "show on the available-
+      order card," but OPEN orders have no rider yet, so it can't go there. Implemented where it's
+      meaningful: the **student order detail** ("Refills at: …" once a rider is assigned — achieves the
+      stated goal "students know where their cylinder is going") + the **rider dashboard header**.
+
+### 13.5 — Item 5: rider self-application + admin approval ✅
+- [x] Public `/register/rider` page + `RiderApplicationForm` → `POST /api/rider-applications` (PENDING,
+      no User/Supplier). Dup email / existing account → 409 (VERIFIED 201 then 409).
+- [x] Admin "Rider applications" card lists PENDING with `ApplicationActions` (approve / reject + reason).
+- [x] `PATCH /api/admin/applications/[id]`: approve → `$transaction` creates User(SUPPLIER)+Supplier, sets
+      APPROVED, emails login + generated temp password, **returns the temp password** so admin can relay it
+      (Resend sandbox). Reject → REJECTED + emails reason.
+- [x] Landing CTA "Partner with us" mailto → `/register/rider` ("Apply to ride"). `AddSupplier` kept.
+
+### 13.6 — Seed refresh + full verification ✅
+- [x] Seed: rider `lat/lng` + `partnerStation`; historical `feeGhs` = gas + solo delivery; 4 demo OPEN
+      orders (a pooled pair + a cash custom-amount + an online solo, all `supplierId:null` for idempotency);
+      2 PENDING applications. Idempotent re-seed verified.
+- [x] `tsc --noEmit` clean; `next build` clean (24 routes); **29/29 runtime smoke checks pass** against
+      `next start` (public pages, unauthed gating, all 3 role dashboards 200, application create/dup,
+      atomic accept 200→409, pool claim=2 stops, student-accept 403). Test rows cleaned; re-seeded.
+
+## Phase 13 — Review
+
+**Shipped (teammate feedback, all verified — `tsc`+`build` clean, 29/29 runtime checks):**
+- **On-demand dispatch (headline):** students no longer pick a rider. Orders broadcast as `OPEN`;
+  riders see a live dispatch board (real distance, estimated earn, pooled trips as one multi-stop card)
+  and claim atomically — first-to-accept wins (409 on race), pooled orders claimed as one trip.
+- **Pay on delivery:** ONLINE (Paystack, unchanged) or CASH_ON_DELIVERY; rider marks cash received.
+- **Custom amount:** synced GHS↔kg partial-fill input; prediction adapts automatically via `verifiedWeightKg`.
+- **Terminology:** all user-facing "Supplier" → "Rider"; landing copy reflects the real pickup→station→return flow.
+- **Rider applications:** public `/register/rider` → admin approve (creates login + emails temp password) / reject.
+
+**Schema:** 2 additive migrations (`add_dispatch_open_and_extras`, `order_default_open`) applied to Neon.
+`PENDING` left in the enum as a legacy no-op (avoids a destructive enum drop).
+
+**Deviations / notes:** `partnerStation` shown on student order detail + rider header (not the available-
+order card — OPEN orders have no rider). Pricing is now platform-set; `Supplier.pricePerKg` retained as
+internal cost only. Express tier kept (sorts first on the board).
+
+**Pending (unchanged from before):** prod `migrate deploy` for the 2 new migrations on the next Vercel
+deploy; Paystack webhook URL; Resend still sandboxed (temp-password email only reaches the owner — temp
+password is also shown in the admin approve panel as a fallback).

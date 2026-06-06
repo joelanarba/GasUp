@@ -70,7 +70,7 @@ export function SavingsCard({
           // Encouraging zero-state — still says "GasUp saves money".
           <div className="mt-4 space-y-3">
             <p className="text-sm text-muted-foreground">
-              When a neighbour orders from the same supplier near you within 90 minutes, your
+              When a neighbour orders near you within 90 minutes, your
               delivery fee drops from{" "}
               <span className="font-semibold text-foreground">{formatGhs(DELIVERY_FEE_SOLO)}</span> to{" "}
               <span className="font-semibold text-success">{formatGhs(DELIVERY_FEE_POOLED)}</span> —

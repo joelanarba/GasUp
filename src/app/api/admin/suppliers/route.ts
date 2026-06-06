@@ -4,8 +4,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
-// Admin-only supplier onboarding. Suppliers never self-register (per SRS) — the
-// admin creates the login + supplier profile here. Mirrors the seed's shape.
+// Admin-only direct rider onboarding — the admin creates the login + rider (Supplier)
+// profile here. This is the fast path alongside the public /register/rider application flow.
 const schema = z.object({
   businessName: z.string().trim().min(2, "Business name is required"),
   fullName: z.string().trim().min(2, "Contact name is required"),
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   if (user.role !== "ADMIN")
-    return NextResponse.json({ error: "Only admins can add suppliers" }, { status: 403 });
+    return NextResponse.json({ error: "Only admins can add riders" }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

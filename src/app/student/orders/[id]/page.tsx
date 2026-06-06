@@ -89,7 +89,10 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           <CardTitle className="text-lg">Order details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Row label="Supplier" value={order.supplier?.businessName ?? "Awaiting supplier"} />
+          <Row label="Rider" value={order.supplier?.businessName ?? "Finding a rider…"} />
+          {order.supplier?.partnerStation && (
+            <Row label="Refills at" value={order.supplier.partnerStation} />
+          )}
           <Row label="Cylinder" value={`${cylinderLabel(order.cylinderSize)} (${order.requestedKg} kg)`} />
           <Row
             label="Deliver to"
@@ -99,24 +102,37 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           {order.specialInstructions && <Row label="Notes" value={order.specialInstructions} />}
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Payment</span>
-            {order.paymentStatus === "PAID" ? (
-              <Badge variant="success">Paid</Badge>
-            ) : order.paymentStatus === "PENDING" ? (
-              <Badge variant="accent">Awaiting confirmation</Badge>
-            ) : (
-              <Badge variant="muted">Unpaid</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {order.paymentMethod === "CASH_ON_DELIVERY" && (
+                <Badge variant="muted">Cash on delivery</Badge>
+              )}
+              {order.paymentStatus === "PAID" ? (
+                <Badge variant="success">Paid</Badge>
+              ) : order.paymentStatus === "PENDING" ? (
+                <Badge variant="accent">Awaiting confirmation</Badge>
+              ) : (
+                <Badge variant="muted">Unpaid</Badge>
+              )}
+            </div>
           </div>
           <div className="flex justify-between border-t border-border pt-3 font-display text-lg font-semibold">
             <span>Total</span>
             <span>{formatGhs(order.feeGhs)}</span>
           </div>
-          {order.paymentStatus !== "PAID" &&
+          {order.paymentMethod === "ONLINE" &&
+            order.paymentStatus !== "PAID" &&
             order.status !== "CANCELLED" &&
             order.status !== "COMPLETED" && (
               <div className="pt-1">
                 <PayButton orderId={order.id} amountLabel={formatGhs(order.feeGhs)} />
               </div>
+            )}
+          {order.paymentMethod === "CASH_ON_DELIVERY" &&
+            order.paymentStatus !== "PAID" &&
+            order.status !== "CANCELLED" && (
+              <p className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                Pay {formatGhs(order.feeGhs)} in cash when your rider arrives.
+              </p>
             )}
         </CardContent>
       </Card>
@@ -141,7 +157,7 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
               <span className="font-medium">{order.requestedKg} kg</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Supplier filled</span>
+              <span className="text-muted-foreground">Rider filled</span>
               <span className="font-display text-lg font-semibold">{order.verifiedWeightKg} kg</span>
             </div>
             {order.proofUrl && (

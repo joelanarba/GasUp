@@ -22,7 +22,7 @@ const features: FeaturePoint[] = [
   },
   {
     Icon: Shield,
-    title: "Student-verified suppliers",
+    title: "Student-verified riders",
     body: "Every rider rated and trust-scored by students.",
   },
   {

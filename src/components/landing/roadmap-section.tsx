@@ -33,8 +33,8 @@ const roadmap: RoadmapItem[] = [
   },
   {
     Icon: BarChart3,
-    title: "Supplier Intelligence Dashboard",
-    body: "Demand forecasting and route insights that help suppliers stock smarter and deliver faster.",
+    title: "Rider Intelligence Dashboard",
+    body: "Demand forecasting and route insights that help riders stock smarter and deliver faster.",
   },
 ];
 

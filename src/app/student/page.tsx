@@ -100,7 +100,7 @@ export default async function StudentDashboard() {
         >
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Active order</p>
-            <p className="mt-1 font-semibold">{cylinderLabel(activeOrder.cylinderSize)} · {activeOrder.supplier?.businessName ?? "Finding supplier"}</p>
+            <p className="mt-1 font-semibold">{cylinderLabel(activeOrder.cylinderSize)} · {activeOrder.supplier?.businessName ?? "Finding a rider…"}</p>
           </div>
           <div className="flex items-center gap-2">
             <OrderStatusBadge status={activeOrder.status} />
@@ -122,7 +122,7 @@ export default async function StudentDashboard() {
               </span>
               Order a refill
             </CardTitle>
-            <CardDescription>Pick a size, choose a supplier, track to your door.</CardDescription>
+            <CardDescription>Pick a size, place it, and track to your door.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">

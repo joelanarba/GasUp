@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   if (user.role !== "SUPPLIER")
-    return NextResponse.json({ error: "Only suppliers verify fills" }, { status: 403 });
+    return NextResponse.json({ error: "Only riders verify fills" }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

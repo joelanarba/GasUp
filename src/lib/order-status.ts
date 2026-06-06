@@ -2,7 +2,6 @@ import { type OrderStatus, type Role } from "@prisma/client";
 
 export type OrderAction =
   | "accept"
-  | "reject"
   | "verify"
   | "confirm"
   | "dispute"
@@ -13,8 +12,9 @@ export type OrderAction =
 type BadgeTone = "default" | "accent" | "muted" | "success" | "outline" | "destructive";
 
 export const STATUS_META: Record<OrderStatus, { label: string; tone: BadgeTone; description: string }> = {
-  PENDING: { label: "Pending", tone: "muted", description: "Waiting for the supplier to accept." },
-  ACCEPTED: { label: "Accepted", tone: "default", description: "Supplier accepted — preparing your refill." },
+  OPEN: { label: "Finding a rider", tone: "muted", description: "Broadcasting to nearby riders — the first to accept takes it." },
+  PENDING: { label: "Pending", tone: "muted", description: "Waiting for a rider to accept." }, // legacy (pre-dispatch)
+  ACCEPTED: { label: "Accepted", tone: "default", description: "A rider accepted — preparing your refill." },
   VERIFYING: { label: "Verifying fill", tone: "accent", description: "Confirm the filled weight matches." },
   ON_THE_WAY: { label: "On the way", tone: "accent", description: "Your rider is en route." },
   DELIVERED: { label: "Delivered", tone: "success", description: "Dropped off — confirm to close it out." },
@@ -25,7 +25,7 @@ export const STATUS_META: Record<OrderStatus, { label: string; tone: BadgeTone; 
 
 // Happy-path progress steps for the timeline UI.
 export const ORDER_TIMELINE: OrderStatus[] = [
-  "PENDING",
+  "OPEN",
   "ACCEPTED",
   "VERIFYING",
   "ON_THE_WAY",
@@ -50,11 +50,10 @@ export function transition(
 
   switch (action) {
     case "accept":
+      // A rider claims a broadcast order. The atomic claim itself lives in the
+      // /accept endpoint (handles pool + race); this is the rule it validates against.
       if (role !== "SUPPLIER") return deny();
-      return current === "PENDING" ? { ok: true, toStatus: "ACCEPTED" } : deny();
-    case "reject":
-      if (role !== "SUPPLIER") return deny();
-      return current === "PENDING" ? { ok: true, toStatus: "CANCELLED" } : deny();
+      return current === "OPEN" ? { ok: true, toStatus: "ACCEPTED" } : deny();
     case "verify":
       // Supplier submits the filled weight + proof — trust gate.
       if (role !== "SUPPLIER") return deny();
@@ -71,7 +70,7 @@ export function transition(
       return deny();
     case "cancel":
       if (role !== "STUDENT") return deny();
-      return current === "PENDING" || current === "ACCEPTED"
+      return current === "OPEN" || current === "ACCEPTED"
         ? { ok: true, toStatus: "CANCELLED" }
         : deny();
     case "complete":
@@ -88,17 +87,13 @@ export function availableActions(
   status: OrderStatus,
 ): { action: OrderAction; label: string; variant: "default" | "outline" | "destructive" }[] {
   if (role === "SUPPLIER") {
-    if (status === "PENDING")
-      return [
-        { action: "accept", label: "Accept", variant: "default" },
-        { action: "reject", label: "Decline", variant: "outline" },
-      ];
+    // OPEN → claimed via the dispatch board's Accept button (atomic /accept endpoint).
     // ACCEPTED → handled by the verify-fill form (needs weight + photo), not a plain button.
     if (status === "ON_THE_WAY")
       return [{ action: "advance", label: "Mark delivered", variant: "default" }];
   }
   if (role === "STUDENT") {
-    if (status === "PENDING" || status === "ACCEPTED")
+    if (status === "OPEN" || status === "ACCEPTED")
       return [{ action: "cancel", label: "Cancel order", variant: "outline" }];
     if (status === "VERIFYING")
       return [

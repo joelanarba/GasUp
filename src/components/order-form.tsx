@@ -2,60 +2,76 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Star, MapPin, Check, Zap, Users } from "lucide-react";
-import { type CylinderSize } from "@prisma/client";
+import { Loader2, MapPin, Zap, Users, CreditCard, Banknote } from "lucide-react";
+import { type CylinderSize, type PaymentMethod } from "@prisma/client";
 import { CYLINDERS, kgFor } from "@/lib/cylinders";
-import { computeFee, formatGhs, EXPRESS_SURCHARGE, DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
+import {
+  computeFee,
+  formatGhs,
+  GAS_PRICE_PER_KG,
+  EXPRESS_SURCHARGE,
+  DELIVERY_FEE_SOLO,
+  DELIVERY_FEE_POOLED,
+} from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
-import { TrustBadge } from "@/components/trust-badge";
-import { type Trust } from "@/lib/trust";
+import { Input } from "@/components/ui/input";
 import { LocationPicker, type LocationValue } from "@/components/location-picker";
 import { cn } from "@/lib/utils";
 
-export type SupplierChoice = {
-  id: string;
-  businessName: string;
-  vehicleType: string;
-  pricePerKg: number;
-  ratingAvg: number;
-  ratingCount: number;
-  trust: Trust | null;
-};
+const MIN_CUSTOM_KG = 1;
 
 export function OrderForm({
-  suppliers,
   defaultAddress,
   defaultLat,
   defaultLng,
 }: {
-  suppliers: SupplierChoice[];
   defaultAddress: string | null;
   defaultLat: number | null;
   defaultLng: number | null;
 }) {
   const router = useRouter();
   const [size, setSize] = useState<CylinderSize>("KG_6");
-  const [supplierId, setSupplierId] = useState<string>(suppliers[0]?.id ?? "");
+  const [fillMode, setFillMode] = useState<"full" | "custom">("full");
+  const [kgInput, setKgInput] = useState("");
+  const [ghsInput, setGhsInput] = useState("");
   const [instructions, setInstructions] = useState("");
   const [express, setExpress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ONLINE");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [address, setAddress] = useState<string>(defaultAddress ?? "");
   const [lat, setLat] = useState<number | null>(defaultLat);
   const [lng, setLng] = useState<number | null>(defaultLng);
-  
   const [editingLoc, setEditingLoc] = useState(false);
 
-  const kg = kgFor(size);
-  const supplier = suppliers.find((s) => s.id === supplierId);
-  const fee = supplier ? computeFee(kg, supplier.pricePerKg, { express }) : null;
+  const fullKg = kgFor(size);
+  const customKg = parseFloat(kgInput);
+  const kg = fillMode === "full" ? fullKg : Number.isFinite(customKg) ? customKg : 0;
+  const customValid =
+    fillMode === "full" ||
+    (Number.isFinite(customKg) && customKg >= MIN_CUSTOM_KG && customKg <= fullKg);
+  const fee = customValid && kg > 0 ? computeFee(kg, { express }) : null;
+
+  function enterCustom() {
+    setFillMode("custom");
+    if (!kgInput) {
+      setKgInput(String(fullKg));
+      setGhsInput(String(Math.round(fullKg * GAS_PRICE_PER_KG)));
+    }
+  }
+  function onKg(v: string) {
+    setKgInput(v);
+    const n = parseFloat(v);
+    setGhsInput(Number.isFinite(n) ? String(Math.round(n * GAS_PRICE_PER_KG)) : "");
+  }
+  function onGhs(v: string) {
+    setGhsInput(v);
+    const n = parseFloat(v);
+    setKgInput(Number.isFinite(n) ? String(Math.round((n / GAS_PRICE_PER_KG) * 100) / 100) : "");
+  }
 
   async function place() {
-    if (!supplierId) {
-      setError("Choose a supplier.");
-      return;
-    }
     if (!address.trim()) {
       setError("Set your delivery address.");
       return;
@@ -64,19 +80,24 @@ export function OrderForm({
       setError("Please pin your exact location on the map.");
       return;
     }
+    if (fillMode === "custom" && !customValid) {
+      setError(`Enter an amount between ${MIN_CUSTOM_KG} kg and ${fullKg} kg.`);
+      return;
+    }
     setBusy(true);
     setError(null);
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        supplierId,
         cylinderSize: size,
+        ...(fillMode === "custom" ? { requestedKg: kg } : {}),
         address: address.trim(),
         lat,
         lng,
         specialInstructions: instructions,
         express,
+        paymentMethod,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -88,6 +109,8 @@ export function OrderForm({
     router.push(`/student/orders/${data.id}`);
     router.refresh();
   }
+
+  const submitDisabled = busy || !address.trim() || !lat || !lng || !customValid;
 
   return (
     <div className="space-y-7">
@@ -114,52 +137,82 @@ export function OrderForm({
         </div>
       </section>
 
-      {/* Supplier */}
+      {/* How much gas? */}
       <section>
-        <h2 className="font-display text-lg font-semibold">Choose a supplier</h2>
-        <div className="mt-3 space-y-3">
-          {suppliers.map((s) => {
-            const total = computeFee(kg, s.pricePerKg).total;
-            const selected = s.id === supplierId;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSupplierId(s.id)}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg border p-4 text-left transition-all",
-                  selected
-                    ? "border-primary bg-primary/5 shadow-warm"
-                    : "border-border bg-card hover:border-primary/40",
-                )}
-              >
-                <div>
-                  <p className="font-semibold">{s.businessName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {s.vehicleType} · {formatGhs(s.pricePerKg)}/kg
-                  </p>
-                  <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
-                    <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                    {s.ratingCount > 0 ? `${s.ratingAvg.toFixed(1)} (${s.ratingCount})` : "New"}
-                  </p>
-                  {s.trust && (
-                    <div className="mt-2">
-                      <TrustBadge trust={s.trust} />
-                    </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="font-display text-lg font-semibold">{formatGhs(total)}</p>
-                  {selected && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                      <Check className="h-3.5 w-3.5" /> Selected
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+        <h2 className="font-display text-lg font-semibold">How much gas?</h2>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setFillMode("full")}
+            className={cn(
+              "rounded-lg border p-3 text-left transition-all",
+              fillMode === "full"
+                ? "border-primary bg-primary/5 shadow-warm"
+                : "border-border bg-card hover:border-primary/40",
+            )}
+          >
+            <p className="font-semibold">Full refill</p>
+            <p className="text-xs text-muted-foreground">Fill the whole {fullKg} kg cylinder</p>
+          </button>
+          <button
+            type="button"
+            onClick={enterCustom}
+            className={cn(
+              "rounded-lg border p-3 text-left transition-all",
+              fillMode === "custom"
+                ? "border-primary bg-primary/5 shadow-warm"
+                : "border-border bg-card hover:border-primary/40",
+            )}
+          >
+            <p className="font-semibold">Custom amount</p>
+            <p className="text-xs text-muted-foreground">Send a fixed cash amount</p>
+          </button>
         </div>
+
+        {fillMode === "custom" && (
+          <div className="mt-3 space-y-3 rounded-lg border border-border bg-card p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="ghs-amount" className="text-sm text-muted-foreground">
+                  GHS amount
+                </label>
+                <Input
+                  id="ghs-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  value={ghsInput}
+                  onChange={(e) => onGhs(e.target.value)}
+                  placeholder="30"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="kg-amount" className="text-sm text-muted-foreground">
+                  Kilograms
+                </label>
+                <Input
+                  id="kg-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.1"
+                  value={kgInput}
+                  onChange={(e) => onKg(e.target.value)}
+                  placeholder="2.14"
+                />
+              </div>
+            </div>
+            {!customValid && (
+              <p className="text-sm font-medium text-destructive">
+                Enter an amount between {MIN_CUSTOM_KG} kg and {fullKg} kg (the {fullKg} kg cylinder).
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              At {formatGhs(GAS_PRICE_PER_KG)}/kg. Your rider will fill exactly this amount at the station.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Delivery location + notes */}
@@ -249,14 +302,14 @@ export function OrderForm({
         </span>
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">Pooling can halve your delivery fee.</span>{" "}
-          If a neighbour orders from this supplier near you within 90 minutes, delivery drops from{" "}
+          If a neighbour orders near you within 90 minutes, delivery drops from{" "}
           {formatGhs(DELIVERY_FEE_SOLO)} to{" "}
           <span className="font-semibold text-success">{formatGhs(DELIVERY_FEE_POOLED)}</span> —
           automatically, right after you place your order.
         </p>
       </div>
 
-      {/* Fee summary + submit */}
+      {/* Fee summary */}
       {fee && (
         <section className="rounded-lg border border-border bg-card p-4">
           <div className="space-y-1.5 text-sm">
@@ -282,14 +335,55 @@ export function OrderForm({
         </section>
       )}
 
+      {/* Payment method */}
+      <section>
+        <h2 className="font-display text-lg font-semibold">Payment</h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("ONLINE")}
+            className={cn(
+              "flex items-center gap-3 rounded-lg border p-4 text-left transition-all",
+              paymentMethod === "ONLINE"
+                ? "border-primary bg-primary/5 shadow-warm"
+                : "border-border bg-card hover:border-primary/40",
+            )}
+          >
+            <CreditCard className={cn("h-5 w-5", paymentMethod === "ONLINE" ? "text-primary" : "text-muted-foreground")} />
+            <span>
+              <span className="block font-semibold">Pay online</span>
+              <span className="block text-sm text-muted-foreground">Secure card via Paystack</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("CASH_ON_DELIVERY")}
+            className={cn(
+              "flex items-center gap-3 rounded-lg border p-4 text-left transition-all",
+              paymentMethod === "CASH_ON_DELIVERY"
+                ? "border-primary bg-primary/5 shadow-warm"
+                : "border-border bg-card hover:border-primary/40",
+            )}
+          >
+            <Banknote className={cn("h-5 w-5", paymentMethod === "CASH_ON_DELIVERY" ? "text-primary" : "text-muted-foreground")} />
+            <span>
+              <span className="block font-semibold">Pay on delivery</span>
+              <span className="block text-sm text-muted-foreground">Cash when your rider arrives</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
-      <Button size="lg" className="w-full" onClick={place} disabled={busy || !address.trim() || !lat || !lng}>
+      <Button size="lg" className="w-full" onClick={place} disabled={submitDisabled}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {busy ? "Placing order…" : "Place order"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Pay securely with Paystack on your order page next — or settle on delivery.
+        {paymentMethod === "ONLINE"
+          ? "Pay securely with Paystack on your order page next."
+          : "Pay your rider in cash when your gas arrives."}
       </p>
     </div>
   );

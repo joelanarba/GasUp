@@ -21,8 +21,9 @@ enum Role {
 }
 
 enum OrderStatus {
-  PENDING      // placed, awaiting supplier
-  ACCEPTED     // supplier took it
+  OPEN         // placed, broadcast to riders — first to accept claims it
+  PENDING      // legacy (pre-dispatch); kept to avoid a destructive enum drop
+  ACCEPTED     // a rider claimed it
   VERIFYING    // supplier uploaded fill weight, awaiting student confirm
   ON_THE_WAY   // confirmed + en route
   DELIVERED    // dropped off
@@ -43,6 +44,17 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum PaymentMethod {
+  ONLINE
+  CASH_ON_DELIVERY
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
@@ -82,7 +94,10 @@ model Supplier {
   availability    String   @default("AVAILABLE") // AVAILABLE / BUSY / OFFLINE
   ratingAvg       Float    @default(0)
   ratingCount     Int      @default(0)
-  pricePerKg      Float    @default(15) // GHS, transparent pricing
+  pricePerKg      Float    @default(15) // GHS — internal cost (what the rider pays the station); no longer charged to students
+  lat             Float?   // rider base location → powers dispatch-board distance
+  lng             Float?
+  partnerStation  String?  // LPG filling station the rider refills at (optional, shown on the board)
   orders          Order[]
 }
 
@@ -100,7 +115,7 @@ model Order {
 
   cylinderSize    CylinderSize
   requestedKg     Float
-  status          OrderStatus  @default(PENDING)
+  status          OrderStatus  @default(OPEN)
   express         Boolean      @default(false) // premium tier: surcharge + queue priority
 
   // trust layer
@@ -115,6 +130,7 @@ model Order {
 
   // payment
   paymentStatus   PaymentStatus @default(UNPAID)
+  paymentMethod   PaymentMethod @default(ONLINE)
   paystackRef     String?
 
   specialInstructions String?
@@ -142,6 +158,22 @@ model Review {
   rating      Int      // 1-5
   comment     String?
   createdAt   DateTime @default(now())
+}
+
+// Self-service rider onboarding: a public application that an admin approves/rejects.
+// Approval creates the User(SUPPLIER)+Supplier; rejection records a reason in notes.
+model RiderApplication {
+  id             String            @id @default(cuid())
+  fullName       String
+  email          String
+  phone          String?
+  businessName   String
+  vehicleType    String            // Motorbike / Tricycle / Vehicle
+  coverageArea   String
+  partnerStation String?
+  status         ApplicationStatus @default(PENDING)
+  notes          String?           // admin rejection reason / note
+  createdAt      DateTime          @default(now())
 }
 
 // Audit trail for live external services (mNotify / Resend / Paystack)

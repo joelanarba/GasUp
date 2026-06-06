@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck, Activity, Star } from "lucide-react";
+import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck, Activity, Star, UserPlus, MapPin, Fuel } from "lucide-react";
 import { type OrderStatus } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrdersByStatusChart, TopSuppliersChart, PoolingDonut } from "@/components/admin-reports";
 import { ImpactCard } from "@/components/impact-card";
 import { AddSupplier } from "@/components/new-supplier-form";
+import { ApplicationActions } from "@/components/application-actions";
 import { poolingImpact } from "@/lib/impact";
 import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
@@ -19,7 +20,7 @@ export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const name = session?.user?.name ?? "Admin";
 
-  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders] =
+  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders, applications] =
     await Promise.all([
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.supplier.count(),
@@ -45,11 +46,15 @@ export default async function AdminDashboard() {
         orderBy: { createdAt: "desc" },
         take: 8,
       }),
+      prisma.riderApplication.findMany({
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
 
   const stats = [
     { icon: Users, label: "Students", value: students },
-    { icon: Store, label: "Suppliers", value: suppliers },
+    { icon: Store, label: "Riders", value: suppliers },
     { icon: Package, label: "Orders", value: orders },
     { icon: BarChart3, label: "Revenue (GHS)", value: paid._sum.feeGhs ?? 0 },
   ];
@@ -145,7 +150,7 @@ export default async function AdminDashboard() {
             </span>
             Reports
           </CardTitle>
-          <CardDescription>Order volume, top suppliers, and pooling rate.</CardDescription>
+          <CardDescription>Order volume, top riders, and pooling rate.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
@@ -154,7 +159,7 @@ export default async function AdminDashboard() {
           </div>
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
-              <p className="mb-3 text-sm font-semibold text-muted-foreground">Top suppliers (deliveries)</p>
+              <p className="mb-3 text-sm font-semibold text-muted-foreground">Top riders (deliveries)</p>
               {supplierData.length > 0 ? (
                 <TopSuppliersChart data={supplierData} />
               ) : (
@@ -169,14 +174,60 @@ export default async function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* ─── Suppliers table ─── */}
+      {/* ─── Rider applications ─── */}
+      <Card className="reveal mt-4" style={{ animationDelay: "430ms" }}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <UserPlus className="h-4 w-4 text-primary" />
+            </span>
+            Rider applications
+            {applications.length > 0 && (
+              <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-xs font-bold text-white">
+                {applications.length}
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription>Self-service applications awaiting review.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {applications.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No applications pending review.</p>
+          ) : (
+            <ul className="space-y-3">
+              {applications.map((a) => (
+                <li key={a.id} className="rounded-xl border border-border/60 bg-card/50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="text-sm">
+                      <p className="font-semibold">{a.businessName}</p>
+                      <p className="text-muted-foreground">{a.fullName} · {a.email}{a.phone ? ` · ${a.phone}` : ""}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">{a.vehicleType}</span>
+                        <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{a.coverageArea}</span>
+                        {a.partnerStation && (
+                          <span className="inline-flex items-center gap-1"><Fuel className="h-3.5 w-3.5" />{a.partnerStation}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <ApplicationActions applicationId={a.id} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─── Riders table ─── */}
       <Card className="reveal mt-4" style={{ animationDelay: "440ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
               <Store className="h-4 w-4 text-primary" />
             </span>
-            Suppliers
+            Riders
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -187,7 +238,7 @@ export default async function AdminDashboard() {
               <tr className="border-b border-border/60 text-left text-muted-foreground">
                 <th className="pb-3 font-medium">Business</th>
                 <th className="pb-3 font-medium">Vehicle</th>
-                <th className="pb-3 font-medium">GHS/kg</th>
+                <th className="pb-3 font-medium">Cost/kg</th>
                 <th className="pb-3 font-medium">Rating</th>
                 <th className="pb-3 text-right font-medium">Trust</th>
               </tr>
@@ -232,7 +283,7 @@ export default async function AdminDashboard() {
             <thead>
               <tr className="border-b border-border/60 text-left text-muted-foreground">
                 <th className="pb-3 font-medium">Student</th>
-                <th className="pb-3 font-medium">Supplier</th>
+                <th className="pb-3 font-medium">Rider</th>
                 <th className="pb-3 font-medium">Fee</th>
                 <th className="pb-3 text-right font-medium">Status</th>
               </tr>

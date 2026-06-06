@@ -46,6 +46,36 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   `git status` lists files as modified purely from CRLF stat-noise (zero real diff). Run `git diff HEAD`
   to see actual content changes; `git status` reports clean again once a diff refreshes the stat cache.
   → Verify "uncommitted work" with `git diff HEAD --stat`, not the status list alone.
+- **Adding an enum value and using it as a default must be two separate migrations.** Postgres throws
+  "unsafe use of new value of enum type" if you `ALTER TYPE ... ADD VALUE 'X'` and then reference `'X'`
+  (e.g. `SET DEFAULT 'X'`) in the same transaction/migration. → Migration 1 adds the value; migration 2
+  (separate, after the first is committed) uses it. Splitting `OrderStatus += OPEN` from the
+  `Order.status default → OPEN` flip is exactly why both applied cleanly.
+- **Prisma `ALTER TYPE ADD VALUE` appends to the END of the PG enum**, ignoring where you place the value
+  in `schema.prisma` (no `BEFORE`/`AFTER` emitted). The DB enum's internal sort order then differs from the
+  schema file. → Never rely on a Postgres enum's intrinsic order for lifecycle/sorting; drive order from a
+  code array (we use `ORDER_TIMELINE`). The mismatch is cosmetic and safe as long as nothing `ORDER BY`s it.
+- **Spreading a Map iterator (`[...map.entries()]` / `[...map.values()]`) fails `tsc`** under this project's
+  target (`TS2802` — needs `--downlevelIteration` or `target ≥ es2015`). → Use `Array.from(map.entries())`,
+  which type-checks without flag changes and preserves inference (spreading also silently degraded the
+  `.map` callback params to `any`).
+- **Object literals inside an array widen string literals to `string`.** A seed array with
+  `paymentMethod: "ONLINE"` infers `string`, which is NOT assignable to the Prisma enum input. → Use the
+  generated enum members (`PaymentMethod.ONLINE`, `ApplicationStatus.PENDING`) in seed/data arrays, or each
+  element gets a contextually-typed annotation.
+- **Idempotent seed rows that app flows mutate must explicitly RESET the mutated fields in the upsert
+  `update`.** The demo OPEN orders are claimed (supplierId set, status→ACCEPTED) by an accept test; the
+  upsert `update` must set `supplierId: null` + `status: OPEN` (not just omit them) or a re-seed leaves a
+  half-claimed "OPEN" order with a rider attached. → Upsert `update` = the full desired clean state, not a
+  diff.
+- **Throwaway Node ESM scripts run from outside the repo can't resolve `@prisma/client`** (`ERR_MODULE_NOT_FOUND`).
+  → Put one-off scripts in the project root so Node resolves `node_modules`, or verify via `fetch` against the
+  running server (no Prisma import needed). The fetch-based verifier was connection-free; only the row-cleanup
+  needed Prisma and had to live in-repo.
+- **Atomic claim under broadcast dispatch = guarded `updateMany` + check `count`.** To make "first rider to
+  accept wins," do `updateMany({ where: { id, status: "OPEN" }, data: { supplierId, status: "ACCEPTED" } })`
+  inside a `$transaction` and treat `count === 0` as "already taken" (409). Under READ COMMITTED the loser's
+  WHERE re-evaluates after the winner commits → 0 rows. A plain `findUnique`-then-`update` would let both win.
 - **"Use my location" must reverse-geocode, not just drop a pin.** The GPS button only set the map
   pin's lat/lng; it never filled the "Delivery address" text, which the order form requires (`!address.trim()`
   blocks submit). So GPS "did nothing" and students were forced to type. → When coordinates feed a form

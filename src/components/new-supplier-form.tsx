@@ -21,7 +21,8 @@ const EMPTY = {
   pricePerKg: "15",
 };
 
-// Admin-only: onboard a supplier (login + profile). Suppliers don't self-register.
+// Admin-only: directly onboard a rider (login + profile) — an additional path alongside
+// the public /register/rider application flow.
 export function AddSupplier() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ export function AddSupplier() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Couldn't add the supplier.");
+      setError(data.error ?? "Couldn't add the rider.");
       setBusy(false);
       return;
     }
@@ -62,11 +63,11 @@ export function AddSupplier() {
     return (
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button size="sm" onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4" /> Add supplier
+          <Plus className="h-4 w-4" /> Add rider
         </Button>
         {done && (
           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-success">
-            <Check className="h-4 w-4" /> Supplier added
+            <Check className="h-4 w-4" /> Rider added
           </span>
         )}
       </div>
@@ -80,7 +81,7 @@ export function AddSupplier() {
     >
       <div className="mb-4 flex items-center justify-between">
         <p className="flex items-center gap-2 font-display text-base font-semibold">
-          <Store className="h-4 w-4 text-primary" /> New supplier
+          <Store className="h-4 w-4 text-primary" /> New rider
         </p>
         <button
           type="button"
@@ -106,7 +107,7 @@ export function AddSupplier() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ns-email">Login email</Label>
-          <Input id="ns-email" type="email" required value={form.email} onChange={set("email")} placeholder="supplier@gasup.app" />
+          <Input id="ns-email" type="email" required value={form.email} onChange={set("email")} placeholder="rider@gasup.app" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ns-phone">Phone <span className="text-muted-foreground">(optional)</span></Label>
@@ -121,7 +122,7 @@ export function AddSupplier() {
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="ns-price">Price per kg (GHS)</Label>
+          <Label htmlFor="ns-price">Cost per kg (GHS, internal)</Label>
           <Input id="ns-price" type="number" step="0.5" min="1" required value={form.pricePerKg} onChange={set("pricePerKg")} />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
@@ -130,7 +131,7 @@ export function AddSupplier() {
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="ns-password">Temporary password</Label>
-          <Input id="ns-password" type="text" required value={form.password} onChange={set("password")} placeholder="At least 8 characters — share with the supplier" />
+          <Input id="ns-password" type="text" required value={form.password} onChange={set("password")} placeholder="At least 8 characters — share with the rider" />
         </div>
       </div>
 
@@ -141,7 +142,7 @@ export function AddSupplier() {
       <div className="mt-4 flex gap-2">
         <Button type="submit" disabled={busy}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {busy ? "Adding…" : "Create supplier"}
+          {busy ? "Adding…" : "Create rider"}
         </Button>
         <Button type="button" variant="outline" onClick={() => { setOpen(false); setError(null); }}>
           Cancel

@@ -57,7 +57,7 @@ export default async function StudentOrdersPage() {
                     <OrderStatusBadge status={o.status} />
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {o.supplier?.businessName ?? "Awaiting supplier"} ·{" "}
+                    {o.supplier?.businessName ?? "Finding a rider…"} ·{" "}
                     {o.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </p>
                   {o.poolId && (

@@ -27,16 +27,20 @@ const faqs: FaqItem[] = [
     a: "We currently cover every hostel block at the University of Cape Coast — Atlantic Hall, Adehye Hall, Oguaa Hall, Valco Court, SRC hostels, and all annex blocks. Delivery is campus-only, which keeps routes short and delivery times fast.",
   },
   {
+    q: "Do I choose my rider?",
+    a: "No — when you place an order it's broadcast to all available riders near you, and the first to accept brings your gas. You just place it and track. That means faster pickups and no waiting on one specific person to be free.",
+  },
+  {
     q: "How do I pay for my refill?",
-    a: "We support mobile money (MTN MoMo, Vodafone Cash, AirtelTigo Money) and cards through Paystack. Pay from your order page right after checkout — or settle on delivery — and the receipt sits in your order history.",
+    a: "Two ways: pay online with mobile money (MTN MoMo, Vodafone Cash, AirtelTigo Money) or card through Paystack, or choose pay-on-delivery and settle in cash when your rider arrives. Either way the receipt sits in your order history.",
   },
   {
     q: "What if the delivered gas weighs less than I ordered?",
-    a: "You flag a dispute in one tap. The order goes to 'Disputed' status and the admin team reviews it within 24 hours. The supplier's trust score is updated accordingly.",
+    a: "You flag a dispute in one tap. The order goes to 'Disputed' status and the admin team reviews it within 24 hours. The rider's trust score is updated accordingly.",
   },
   {
-    q: "How are suppliers rated?",
-    a: "After each delivery, you rate the supplier on a 5-star scale. We also factor in their fill-weight accuracy and dispute history into a single trust score — ranked Excellent, Trusted, Fair, or Watch — shown on every supplier so you always know who's reliable before you choose.",
+    q: "How are riders rated?",
+    a: "After each delivery, you rate the rider on a 5-star scale. We also factor in their fill-weight accuracy and dispute history into a single trust score — ranked Excellent, Trusted, Fair, or Watch — so the most reliable riders build a strong reputation.",
   },
 ];
 

@@ -13,19 +13,19 @@ const steps: Step[] = [
     number: 1,
     Icon: ShoppingBag,
     title: "Order your refill",
-    body: "Pick your cylinder size, choose a verified supplier, and pay securely with Paystack.",
+    body: "Pick a cylinder size or a custom cash amount, drop your location, and pay online or on delivery.",
   },
   {
     number: 2,
     Icon: ShieldCheck,
-    title: "Verify the fill",
-    body: "Your supplier weighs the cylinder and uploads proof. You confirm the weight on delivery — no more guessing.",
+    title: "A rider accepts & verifies",
+    body: "Your order broadcasts to nearby riders. The first to accept takes your empty cylinder to a station, refills it, and uploads the weight — you confirm it matches on delivery.",
   },
   {
     number: 3,
     Icon: Truck,
     title: "Track to your door",
-    body: "Follow your delivery in real-time. Hostel orders pool automatically so you pay less per refill.",
+    body: "Follow your rider in real time. Nearby orders pool automatically so you pay less per refill.",
   },
 ];
 

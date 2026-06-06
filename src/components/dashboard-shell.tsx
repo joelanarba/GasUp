@@ -5,7 +5,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 
 const roleLabel: Record<Role, string> = {
   STUDENT: "Student",
-  SUPPLIER: "Supplier",
+  SUPPLIER: "Rider",
   ADMIN: "Admin",
 };
 

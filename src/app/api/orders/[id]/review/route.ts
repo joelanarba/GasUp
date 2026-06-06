@@ -28,7 +28,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (order.studentId !== user.id)
     return NextResponse.json({ error: "Not your order" }, { status: 403 });
   if (!order.supplierId)
-    return NextResponse.json({ error: "Order has no supplier to rate" }, { status: 400 });
+    return NextResponse.json({ error: "Order has no rider to rate" }, { status: 400 });
   if (order.status !== "COMPLETED")
     return NextResponse.json({ error: "Confirm the delivery before rating" }, { status: 409 });
   if (order.review)

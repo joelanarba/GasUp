@@ -24,15 +24,15 @@ export async function notifyOrderEvent(event: OrderEvent, orderId: string): Prom
     const copy: Record<OrderEvent, { subject: string; line: string }> = {
       placed: {
         subject: `Order placed — ${item} refill`,
-        line: `Hi ${name}, your ${item} refill is in. We'll tell you the moment a supplier accepts.`,
+        line: `Hi ${name}, your ${item} refill is in. We'll tell you the moment a rider accepts.`,
       },
       accepted: {
-        subject: "Supplier accepted your refill",
-        line: `${order.supplier?.businessName ?? "Your supplier"} accepted your ${item} order and is preparing it.`,
+        subject: "A rider accepted your refill",
+        line: `${order.supplier?.businessName ?? "Your rider"} accepted your ${item} order and is preparing it.`,
       },
       verifying: {
         subject: "Confirm your fill weight",
-        line: `Your supplier filled ${order.verifiedWeightKg ?? ""}kg. Open GasUp to confirm it matches on delivery.`,
+        line: `Your rider filled ${order.verifiedWeightKg ?? ""}kg. Open GasUp to confirm it matches on delivery.`,
       },
       on_the_way: {
         subject: "Your gas is on the way",

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { TrendingUp, Shield, Route, Star, ArrowRight } from "lucide-react";
 import { ScrollReveal } from "./scroll-reveal";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ const benefits = [
   {
     Icon: Shield,
     title: "Build your reputation",
-    body: "Your trust score — based on fill accuracy, ratings, and dispute history — is visible to every student. Top-rated suppliers get picked first.",
+    body: "Your trust score — based on fill accuracy, ratings, and dispute history — is shown to every student you deliver to. Reliable riders earn more repeat orders.",
   },
   {
     Icon: Route,
@@ -54,13 +55,13 @@ export function SuppliersSection() {
             <ScrollReveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
                 <TrendingUp className="h-3.5 w-3.5" />
-                For suppliers
+                For riders
               </span>
               <h2 className="mt-5 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                Grow your gas business on campus
+                Earn on every delivery
               </h2>
               <p className="mt-3 max-w-md text-muted-foreground">
-                Join the network of verified suppliers serving UCC students. More orders, optimised routes, and a trust system that rewards quality.
+                Pick up empty cylinders, refill at your station, and bring them back full. Orders broadcast straight to your dispatch board — accept the ones near you and ride.
               </p>
             </ScrollReveal>
 
@@ -82,12 +83,12 @@ export function SuppliersSection() {
 
             <ScrollReveal delay={400}>
               <Button asChild size="lg" className="mt-8">
-                <a href="mailto:suppliers@gasup.app?subject=GasUp%20supplier%20partnership">
-                  Partner with us <ArrowRight className="h-4 w-4" />
-                </a>
+                <Link href="/register/rider">
+                  Apply to ride <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
               <p className="mt-3 text-xs text-muted-foreground">
-                Suppliers are onboarded by the GasUp team — reach out and we&apos;ll set up your account.
+                Applications are reviewed within 24 hours. Approved riders get a login to start accepting orders.
               </p>
             </ScrollReveal>
           </div>

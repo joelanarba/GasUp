@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { CylinderSize } from "@prisma/client";
+import { CylinderSize, PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 import { kgFor } from "@/lib/cylinders";
@@ -8,14 +8,18 @@ import { computeFee } from "@/lib/pricing";
 import { poolOrder } from "@/lib/pooling";
 import { notifyOrderEvent } from "@/lib/services/notifications";
 
+const MIN_CUSTOM_KG = 1; // smallest partial fill we accept
+
 const schema = z.object({
-  supplierId: z.string().min(1, "Choose a supplier"),
   cylinderSize: z.nativeEnum(CylinderSize),
+  // Custom partial fill (item 3). Absent → full cylinder. Capped at the cylinder's capacity.
+  requestedKg: z.number().positive().optional(),
   address: z.string().trim().min(1, "Address is required"),
   lat: z.number().nullable(),
   lng: z.number().nullable(),
   specialInstructions: z.string().trim().max(280).optional().or(z.literal("")),
   express: z.boolean().optional(),
+  paymentMethod: z.nativeEnum(PaymentMethod).optional(),
 });
 
 export async function POST(req: Request) {
@@ -36,14 +40,25 @@ export async function POST(req: Request) {
   const student = await prisma.user.findUnique({ where: { id: user.id } });
   if (!student) return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
-  const supplier = await prisma.supplier.findUnique({ where: { id: input.supplierId } });
-  if (!supplier) return NextResponse.json({ error: "Supplier not found" }, { status: 400 });
+  // kg: full cylinder by default, or a custom partial fill (clamped to the cylinder capacity).
+  const fullKg = kgFor(input.cylinderSize);
+  let kg = fullKg;
+  if (input.requestedKg != null) {
+    if (input.requestedKg < MIN_CUSTOM_KG)
+      return NextResponse.json({ error: `Minimum fill is ${MIN_CUSTOM_KG} kg` }, { status: 400 });
+    if (input.requestedKg > fullKg)
+      return NextResponse.json(
+        { error: `A ${fullKg} kg cylinder can't hold more than ${fullKg} kg` },
+        { status: 400 },
+      );
+    kg = Math.round(input.requestedKg * 100) / 100;
+  }
 
-  const kg = kgFor(input.cylinderSize);
   const express = input.express ?? false;
-  const fee = computeFee(kg, supplier.pricePerKg, { express });
+  const paymentMethod = input.paymentMethod ?? "ONLINE";
+  const fee = computeFee(kg, { express });
 
-  // Update student defaults
+  // Update student defaults for next time.
   await prisma.user.update({
     where: { id: student.id },
     data: {
@@ -53,10 +68,11 @@ export async function POST(req: Request) {
     },
   });
 
+  // Placed unassigned — broadcasts to the rider dispatch board; first to accept claims it.
   const order = await prisma.order.create({
     data: {
       studentId: student.id,
-      supplierId: supplier.id,
+      supplierId: null,
       address: input.address,
       lat: input.lat,
       lng: input.lng,
@@ -65,12 +81,13 @@ export async function POST(req: Request) {
       express,
       feeGhs: fee.total,
       specialInstructions: input.specialInstructions || null,
-      status: "PENDING",
+      status: "OPEN",
       paymentStatus: "UNPAID",
+      paymentMethod,
     },
   });
 
-  // Auto-pool with same-supplier nearby PENDING orders in the time window.
+  // Auto-pool with nearby OPEN orders in the time window.
   const pool = await poolOrder(order.id);
 
   await notifyOrderEvent("placed", order.id);
