@@ -49,7 +49,7 @@ export function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8 py-3.5">
           {/* Brand */}
           <Link href="/" className="relative z-10">
-            <Brand size="sm" inverted={!scrolled} />
+            <Brand size="sm" inverted={!scrolled || mobileOpen} />
           </Link>
 
           {/* Desktop nav links */}
@@ -87,7 +87,7 @@ export function Navbar() {
             className={cn(
               "md:hidden relative z-10 p-2 -mr-2 transition-colors",
               mobileOpen
-                ? "text-foreground"
+                ? "text-white"
                 : scrolled
                   ? "text-foreground"
                   : "text-white"
@@ -102,7 +102,7 @@ export function Navbar() {
       {/* Mobile overlay */}
       <div
         className={cn(
-          "fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-background/98 backdrop-blur-xl transition-all duration-300",
+          "fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-[#141413]/98 backdrop-blur-xl transition-all duration-300",
           mobileOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -113,7 +113,7 @@ export function Navbar() {
             key={link.href}
             href={link.href}
             onClick={() => setMobileOpen(false)}
-            className="text-2xl font-display font-semibold text-foreground/80 hover:text-foreground transition-colors"
+            className="text-2xl font-display font-semibold text-white/80 hover:text-white transition-colors"
           >
             {link.label}
           </a>
@@ -123,7 +123,7 @@ export function Navbar() {
           <Link
             href="/login"
             onClick={() => setMobileOpen(false)}
-            className="text-lg text-foreground/70 hover:text-foreground transition-colors"
+            className="text-lg text-white/70 hover:text-white transition-colors"
           >
             Sign in
           </Link>
