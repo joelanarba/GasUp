@@ -10,7 +10,7 @@ export default withAuth(
 
     const owns =
       (pathname.startsWith("/admin") && role === "ADMIN") ||
-      (pathname.startsWith("/supplier") && role === "SUPPLIER") ||
+      (pathname.startsWith("/rider") && role === "SUPPLIER") ||
       (pathname.startsWith("/student") && role === "STUDENT");
 
     // Authenticated but hitting another role's area → bounce to their own.
@@ -27,5 +27,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/student/:path*", "/supplier/:path*", "/admin/:path*"],
+  matcher: ["/student/:path*", "/rider/:path*", "/admin/:path*"],
 };
