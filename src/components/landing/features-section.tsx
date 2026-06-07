@@ -26,7 +26,7 @@ const features: Feature[] = [
     Icon: Users,
     image: "/images/feature-pool.svg",
     title: "Pooled hostel refills",
-    body: "Orders from the same hostel block bundle into one rider trip — you pay a lower delivery fee, the rider earns more per trip. Everyone wins.",
+    body: "Orders from the same hostel bundle into one rider trip — you pay a lower delivery fee, the rider earns more per trip. Everyone wins.",
   },
 ];
 

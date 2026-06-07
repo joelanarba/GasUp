@@ -18,7 +18,7 @@ const benefits = [
   {
     Icon: Route,
     title: "Optimised routes",
-    body: "We cluster orders by hostel block so you spend less on fuel and more time earning. Campus-only means shorter distances.",
+    body: "We cluster nearby orders so you spend less on fuel and more time earning. Tight local routes mean shorter distances.",
   },
   {
     Icon: Star,

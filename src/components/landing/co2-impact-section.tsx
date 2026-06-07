@@ -18,7 +18,7 @@ const stats: StatCard[] = [
   {
     Icon: Fuel,
     title: "Less fuel burned",
-    body: "One trip serves 4-6 rooms in your block",
+    body: "One trip serves 4-6 rooms in your hostel",
   },
   {
     Icon: TreePine,

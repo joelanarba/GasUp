@@ -13,7 +13,7 @@ const features: FeaturePoint[] = [
   {
     Icon: MapPin,
     title: "Every hostel covered",
-    body: "Atlantic, Adehye, Oguaa, Valco — all blocks.",
+    body: "Amamoma, Apewosika, Kwaprow, Science — all covered.",
   },
   {
     Icon: Clock,
@@ -67,8 +67,8 @@ export function CampusSection() {
               Built for University of Cape Coast
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-white/50">
-              From Atlantic Hall to Oguaa Hall — we deliver to every hostel
-              block on campus.
+              From Amamoma to Kwaprow — we deliver to every private hostel
+              in the communities around campus.
             </p>
           </div>
         </ScrollReveal>

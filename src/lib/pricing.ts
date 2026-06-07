@@ -4,7 +4,7 @@
 // Pooled orders (Phase 6) get the lower delivery fee — that's the unit-economics edge.
 export const GAS_PRICE_PER_KG = 14; // GHS — platform retail gas price charged to students
 export const DELIVERY_FEE_SOLO = 10; // GHS, single-stop trip
-export const DELIVERY_FEE_POOLED = 5; // GHS, shared hostel-block trip
+export const DELIVERY_FEE_POOLED = 5; // GHS, shared hostel / nearby trip
 export const EXPRESS_SURCHARGE = 8; // GHS, premium priority delivery
 export const RIDER_CUT = 0.75; // rider's share of the delivery fee (their earnings per trip)
 

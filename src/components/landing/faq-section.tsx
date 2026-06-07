@@ -20,11 +20,11 @@ const faqs: FaqItem[] = [
   },
   {
     q: "What is a pooled refill?",
-    a: "When multiple students in the same hostel block order around the same time, we bundle those orders into a single rider trip. Everyone pays a lower delivery fee because the rider covers one route instead of three. You'll see a 'Pooled' badge on your order if it qualifies.",
+    a: "When multiple students in the same hostel — or close by — order around the same time, we bundle those orders into a single rider trip. Everyone pays a lower delivery fee because the rider covers one route instead of three. You'll see a 'Pooled' badge on your order if it qualifies.",
   },
   {
     q: "Which hostels does GasUp deliver to?",
-    a: "We currently cover every hostel block at the University of Cape Coast — Atlantic Hall, Adehye Hall, Oguaa Hall, Valco Court, SRC hostels, and all annex blocks. Delivery is campus-only, which keeps routes short and delivery times fast.",
+    a: "We cover the private student hostels in the communities around UCC — Amamoma, Apewosika, Kwaprow, Science, and Kokoado — places like Hamglor, Ewusiwa, Topp, NEST and Golden Royal Palace. Staying local keeps routes short and delivery times fast.",
   },
   {
     q: "Do I choose my rider?",

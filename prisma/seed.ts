@@ -45,12 +45,14 @@ async function main() {
     },
   });
 
+  // Private hostels in the communities around UCC (where students cook with gas) —
+  // NOT the on-campus halls of residence (those students don't use LPG).
   const addresses = [
-    { name: "Casford Hall, Block A", lat: 5.1131, lng: -1.2912 },
-    { name: "Adehye Hall, Block B", lat: 5.1148, lng: -1.2895 },
-    { name: "Valco Hall, Block A", lat: 5.1102, lng: -1.2934 },
-    { name: "UCC Science Market", lat: 5.1120, lng: -1.2900 },
-    { name: "Amamoma, Blue Gate", lat: 5.1150, lng: -1.2880 },
+    { name: "Hamglor Hostel, Amamoma", lat: 5.1131, lng: -1.2912 },
+    { name: "Ewusiwa Hostel, Amamoma", lat: 5.1148, lng: -1.2895 },
+    { name: "Golden Royal Palace Hostel, Kwaprow", lat: 5.1102, lng: -1.2934 },
+    { name: "NEST Hostel, Apewosika", lat: 5.1120, lng: -1.2900 },
+    { name: "Topp Hostel, Amamoma", lat: 5.1150, lng: -1.2880 },
   ];
 
   // --- Suppliers (admin-created in real life; seeded here) ---
@@ -142,7 +144,7 @@ async function main() {
   //     on day one. orderHistory = [daysAgo,...] (most recent last). ---
   const studentSpecs = [
     { email: "akua@gasup.app", fullName: "Akua Sarpong", householdSize: 1, locIdx: 0, size: CylinderSize.KG_6, history: [44, 22] },
-    // kofi shares Akua's loc (idx 0) so same-block pooling can be demoed.
+    // kofi shares Akua's loc (idx 0 — same hostel) so pooling can be demoed.
     { email: "kofi@gasup.app", fullName: "Kofi Annan", householdSize: 2, locIdx: 0, size: CylinderSize.KG_6, history: [30, 12] },
     { email: "esi@gasup.app", fullName: "Esi Bonsu", householdSize: 3, locIdx: 2, size: CylinderSize.KG_12_5, history: [50, 20] },
     { email: "nana@gasup.app", fullName: "Nana Adjei", householdSize: 1, locIdx: 3, size: CylinderSize.KG_6, history: [16] },
@@ -216,7 +218,7 @@ async function main() {
   if (seededStudents.length >= 4) {
     const [akua, kofi, esi, nana] = seededStudents;
 
-    // A pooled pair (akua + kofi share Casford Hall, Block A) → "Pooled · 2 stops" on the board.
+    // A pooled pair (akua + kofi share Hamglor Hostel, Amamoma) → "Pooled · 2 stops" on the board.
     const pool = await prisma.pool.upsert({
       where: { id: "seed-pool-demo" },
       update: { lat: akua.loc.lat, lng: akua.loc.lng },

@@ -46,6 +46,12 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   `git status` lists files as modified purely from CRLF stat-noise (zero real diff). Run `git diff HEAD`
   to see actual content changes; `git status` reports clean again once a diff refreshes the stat cache.
   → Verify "uncommitted work" with `git diff HEAD --stat`, not the status list alone.
+- **UCC's on-campus halls (Atlantic, Adehye, Oguaa, Casford, Valco…) are the WRONG market — they don't
+  cook with LPG.** The gas-delivery customers are students in the **private hostels** in the surrounding
+  communities: Amamoma, Apewosika, Kwaprow, Science (New Site), Kokoado. Real hostel names to use in
+  demo data/copy: Hamglor, Ewusiwa, Topp, St. Paul, NEST, Baduwa, Golden Royal Palace (Kwaprow), Juliborn.
+  → Seed addresses + landing copy must use private hostels in those communities, never the official halls;
+  and these are "hostels," not "blocks" (halls have blocks, private hostels are buildings).
 - **Adding an enum value and using it as a default must be two separate migrations.** Postgres throws
   "unsafe use of new value of enum type" if you `ALTER TYPE ... ADD VALUE 'X'` and then reference `'X'`
   (e.g. `SET DEFAULT 'X'`) in the same transaction/migration. → Migration 1 adds the value; migration 2
