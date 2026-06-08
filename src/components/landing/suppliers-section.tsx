@@ -90,6 +90,15 @@ export function SuppliersSection() {
               <p className="mt-3 text-xs text-muted-foreground">
                 Applications are reviewed within 24 hours. Approved riders get a login to start accepting orders.
               </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Already a rider?{" "}
+                <Link
+                  href="/login?role=rider"
+                  className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+                >
+                  Sign in
+                </Link>
+              </p>
             </ScrollReveal>
           </div>
         </div>

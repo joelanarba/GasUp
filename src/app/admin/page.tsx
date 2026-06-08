@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck, Activity, Star, UserPlus, MapPin, Fuel } from "lucide-react";
+import { Users, Store, Package, BarChart3, ShieldAlert, ShieldCheck, Activity, Star, UserPlus, MapPin, Fuel, ShieldHalf } from "lucide-react";
 import { type OrderStatus } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { OrdersByStatusChart, TopSuppliersChart, PoolingDonut } from "@/components/admin-reports";
 import { ImpactCard } from "@/components/impact-card";
 import { AddSupplier } from "@/components/new-supplier-form";
+import { AddAdmin, RemoveAdminButton } from "@/components/admin-accounts";
 import { ApplicationActions } from "@/components/application-actions";
 import { poolingImpact } from "@/lib/impact";
 import { supplierTrustMap } from "@/lib/trust-data";
@@ -19,8 +20,9 @@ import { STATUS_META } from "@/lib/order-status";
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const name = session?.user?.name ?? "Admin";
+  const currentAdminId = session?.user?.id;
 
-  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders, applications] =
+  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders, applications, admins] =
     await Promise.all([
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.supplier.count(),
@@ -49,6 +51,11 @@ export default async function AdminDashboard() {
       prisma.riderApplication.findMany({
         where: { status: "PENDING" },
         orderBy: { createdAt: "desc" },
+      }),
+      prisma.user.findMany({
+        where: { role: "ADMIN", deactivatedAt: null },
+        select: { id: true, fullName: true, email: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
       }),
     ]);
 
@@ -175,7 +182,7 @@ export default async function AdminDashboard() {
       </Card>
 
       {/* ─── Rider applications ─── */}
-      <Card className="reveal mt-4" style={{ animationDelay: "430ms" }}>
+      <Card id="applications" className="reveal mt-4 scroll-mt-24" style={{ animationDelay: "430ms" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
@@ -263,6 +270,69 @@ export default async function AdminDashboard() {
               })}
             </tbody>
           </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Admin accounts ─── */}
+      <Card className="reveal mt-4" style={{ animationDelay: "460ms" }}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10">
+              <ShieldHalf className="h-4 w-4 text-primary" />
+            </span>
+            Admin accounts
+          </CardTitle>
+          <CardDescription>Invite another admin. The last admin can&apos;t be removed.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddAdmin />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/60 text-left text-muted-foreground">
+                  <th className="pb-3 font-medium">Name</th>
+                  <th className="pb-3 font-medium">Email</th>
+                  <th className="pb-3 font-medium">Joined</th>
+                  <th className="pb-3 text-right font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {admins.map((a) => {
+                  const isSelf = a.id === currentAdminId;
+                  const isLast = admins.length <= 1;
+                  return (
+                    <tr key={a.id} className="border-b border-border/40 transition-colors hover:bg-muted/30 last:border-0">
+                      <td className="py-3 font-medium">
+                        {a.fullName}
+                        {isSelf && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
+                      </td>
+                      <td className="py-3 text-muted-foreground">{a.email}</td>
+                      <td className="py-3 text-muted-foreground">
+                        {new Date(a.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="py-3 text-right">
+                        <RemoveAdminButton
+                          adminId={a.id}
+                          disabled={isSelf || isLast}
+                          reason={
+                            isSelf
+                              ? "You can't remove your own account"
+                              : isLast
+                                ? "Can't remove the last admin"
+                                : undefined
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

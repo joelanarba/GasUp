@@ -82,6 +82,28 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   accept wins," do `updateMany({ where: { id, status: "OPEN" }, data: { supplierId, status: "ACCEPTED" } })`
   inside a `$transaction` and treat `count === 0` as "already taken" (409). Under READ COMMITTED the loser's
   WHERE re-evaluates after the winner commits → 0 rows. A plain `findUnique`-then-`update` would let both win.
+- **A Next.js `layout` can't read `searchParams` — only `page` components can.** To make the auth
+  left-panel vary by `?role=`, the param had to be read in a *client* component (`AuthSidePanel`) via
+  `useSearchParams()`, which the layout wraps in `<Suspense>`. → When shared chrome (layout) must react to
+  a query param, push the param-reading into a client child + Suspense; don't try to thread it through the
+  layout. And any `useSearchParams()` usage needs a `<Suspense>` boundary or `next build` fails with
+  "useSearchParams() should be wrapped in a suspense boundary" (and the page silently deopts to dynamic).
+  Wrapping kept `/login` statically prerendered (○) with the variant hydrating client-side.
+- **The "last admin" 409 guard is real but practically unreachable via the UI — keep it as defense in
+  depth.** Since the actor is always an *active* admin, any *other* admin target means ≥2 active admins, so
+  the last-admin count check never trips for a non-self target; the self-removal 400 guard is what actually
+  prevents lockout. → Don't assume an untested guard is dead code; it covers races / future callers. Smoke
+  the reachable paths (create 201, dup 409, self-remove 400, remove-other 200, re-remove 409) and the login
+  rejection for the deactivated account, rather than contriving the unreachable one.
+- **Resend sandbox rejects every recipient except the account owner** ("You can only send testing emails to
+  your own email address"), logged as `resend/send ok=false`. This is NOT a bug — it's the wrapper degrading
+  gracefully. mNotify SMS, by contrast, is genuinely live (`ok=true`). → When smoking notifications, read
+  ServiceLog: a sandbox-rejected email still proves the call fired and was audited; assert on the log row,
+  not on inbox delivery.
+- **Verify auth-gated routes via the real NextAuth credentials flow over HTTP, not a faked cookie.** Get
+  `/api/auth/csrf` with `-SessionVariable`, POST form-urlencoded `{csrfToken,email,password,json:true}` to
+  `/api/auth/callback/credentials`, then reuse the `-WebSession`; confirm with `/api/auth/session`. This is
+  the connection-light, lessons-approved way to smoke admin-only routes against `next start`.
 - **"Use my location" must reverse-geocode, not just drop a pin.** The GPS button only set the map
   pin's lat/lng; it never filled the "Delivery address" text, which the order form requires (`!address.trim()`
   blocks submit). So GPS "did nothing" and students were forced to type. → When coordinates feed a form

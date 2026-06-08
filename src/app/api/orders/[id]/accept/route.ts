@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 import { transition } from "@/lib/order-status";
-import { notifyOrderEvent } from "@/lib/services/notifications";
+import { notifyOrderEvent, notifyRiderFirstOrder } from "@/lib/services/notifications";
 
 // A rider claims a broadcast (OPEN) order. Atomic: the first rider to commit wins;
 // a racing second rider gets a 409. If the order is pooled, the rider claims every
@@ -62,6 +62,16 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   // Notify each claimed order's student (wrapped — never throws into the flow).
   for (const id of result.claimed) await notifyOrderEvent("accepted", id);
+
+  // If this is the rider's first-ever trip, send the welcome/verified-fill reminder.
+  // ratingCount===0 (never rated) + every order they now own came from this claim
+  // (i.e. zero before) → first trip. Correct even when the first claim is a pool.
+  if (supplier.ratingCount === 0) {
+    const orderCount = await prisma.order.count({ where: { supplierId: supplier.id } });
+    if (orderCount === result.claimed.length) {
+      await notifyRiderFirstOrder(result.claimed[0]);
+    }
+  }
 
   return NextResponse.json({ ok: true, claimed: result.claimed.length });
 }

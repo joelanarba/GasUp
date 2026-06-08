@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import {
+  notifyAdminsNewApplication,
+  notifyApplicantReceived,
+} from "@/lib/services/notifications";
 
 // Public: anyone can apply to become a rider. Creates a PENDING RiderApplication —
 // no User/Supplier is created until an admin approves it.
@@ -46,7 +50,7 @@ export async function POST(req: Request) {
     );
   }
 
-  await prisma.riderApplication.create({
+  const app = await prisma.riderApplication.create({
     data: {
       fullName: d.fullName,
       email: d.email,
@@ -57,6 +61,10 @@ export async function POST(req: Request) {
       partnerStation: d.partnerStation || null,
     },
   });
+
+  // Fire-and-forget notifications (both self-wrapped — a failed send never blocks submission).
+  await notifyAdminsNewApplication(app);
+  await notifyApplicantReceived(app);
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

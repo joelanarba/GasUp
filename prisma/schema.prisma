@@ -65,6 +65,7 @@ model User {
   fullName     String
   role         Role      @default(STUDENT)
   createdAt    DateTime  @default(now())
+  deactivatedAt DateTime? // soft-deactivation (admins): set → can't log in, audit trail preserved
 
   // student fields
   defaultAddress String?

@@ -23,6 +23,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email.toLowerCase().trim() },
         });
         if (!user) return null;
+        if (user.deactivatedAt) return null; // soft-deactivated accounts can't sign in
 
         const ok = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!ok) return null;

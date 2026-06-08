@@ -291,3 +291,77 @@ internal cost only. Express tier kept (sorts first on the board).
 **Pending (unchanged from before):** prod `migrate deploy` for the 2 new migrations on the next Vercel
 deploy; Paystack webhook URL; Resend still sandboxed (temp-password email only reaches the owner — temp
 password is also shown in the admin approve panel as a fallback).
+
+## Phase 14 — Notifications, role-aware login, admin self-management
+
+Four focused additions from the user spec (2026-06-07). Items 1–3 need no schema change; item 4 adds
+one additive nullable column (`User.deactivatedAt`) → **migration checkpoint before its routes/UI**.
+All external sends go through `lib/services/*` wrappers (ServiceLog audit + graceful degradation); a
+failed notification must never block the flow. New copy stays on-brand (warm amber, mobile-first).
+
+### 14.1 — Rider-application notifications (items 1 + 2a) ✅
+- [x] Added helpers to `lib/services/notifications.ts`: `notifyAdminsNewApplication(app)` (email + SMS to
+      EVERY `role:ADMIN` — name/phone/business/vehicle/coverage/station + link to `/admin#applications`)
+      and `notifyApplicantReceived(app)` (applicant email + SMS: received, reviewed within 24h). Each is
+      self-wrapped (try/catch inside) so it never throws into the request. Shared email shell/CTA helpers.
+- [x] `POST /api/rider-applications`: captures the created record; calls both helpers before responding.
+- [x] Added `id="applications"` anchor (+ `scroll-mt-24`) to the admin Rider-applications card.
+
+### 14.2 — Applicant lifecycle notifications (items 2b–2d) ✅
+- [x] `notifyApplicationApproved({to,phone,fullName,email,tempPassword})` (email: login + temp pw +
+      `/login?role=rider` link; SMS: congrats) and `notifyApplicationRejected({to,phone,fullName,reason})`
+      (email + SMS). Wired into `PATCH /api/admin/applications/[id]` (replaced the two inline emails; still
+      returns `tempPassword` to the admin panel).
+- [x] `notifyRiderFirstOrder(orderId)`: in `POST /api/orders/[id]/accept`, after the claim, detects the
+      rider's first-ever trip (`ratingCount === 0 && total orders === claimed count` — pool-safe) → email +
+      SMS the rider (weigh + photograph reminder, link to `/rider`).
+
+### 14.3 — Role-aware /login variants (item 3) ✅
+- [x] `login/page.tsx`: reads `?role=` via `useSearchParams()` → student(default)/rider/admin heading +
+      sub + CTAs; form wrapped in `<Suspense>`. Admin = terse, no register links. Rider = prominent
+      "Apply to ride" outline button + "Student sign in" link.
+- [x] `AuthSidePanel` client component (reads role, layout wraps it in `<Suspense>`); rider tagline,
+      admin = plain dark panel (logo only), default = student copy/illustration.
+- [x] Nav wiring: `SignOutButton` gained `callbackUrl`; `DashboardShell` passes `/login?role=admin`
+      (ADMIN), `/login?role=rider` (SUPPLIER), `/` (STUDENT). Landing rider section gained "Already a
+      rider? Sign in" → `/login?role=rider`.
+
+### 14.4 — Admin can create / remove admins (item 4)
+- [x] **Migration `add_admin_deactivation`** (`20260607200031`) — additive nullable `User.deactivatedAt
+      DateTime?`; applied to Neon (verified: single `ADD COLUMN`, no reset). **CHECKPOINT signed off.**
+- [x] `authorize()`: rejects login when `deactivatedAt` is set (VERIFIED: deactivated admin → no session).
+- [x] `POST /api/admin/admins` (admin-only; zod fullName/email/password≥8; email-unique → 409) → creates
+      `User(ADMIN)` + welcome email (creds + `/login?role=admin` link) via the wrapper. SMS skipped (no
+      phone collected — degrades gracefully).
+- [x] `DELETE /api/admin/admins/[id]` soft-deactivates (sets `deactivatedAt`); guards: admin-only, never
+      the last active admin, not self, already-removed → 409.
+- [x] Admin "Admin accounts" card (below Riders): lists active admins (name / email / joined), inline
+      collapsible `AddAdmin` form (AddSupplier pattern), per-row Remove (disabled + `title` tooltip when
+      last or self; "(you)" tag on own row).
+- [x] **Verify** — `tsc --noEmit`, `next build` (27 routes), `next lint` all clean. Runtime smoke vs
+      `next start`: public + `/login?role=` variants 200; rider application 201 (admin + applicant email/
+      SMS audited to ServiceLog, graceful degradation); admin guards 401; authed create 201 / dup 409 /
+      self-remove 400 / remove-other 200 / re-remove 409; deactivated login rejected. Test rows cleaned.
+
+## Phase 14 — Review
+
+**Shipped (all verified — `tsc`/`build`/`lint` clean + runtime smoke vs `next start`):**
+- **Rider-application notifications:** on submit, every admin gets an email + SMS (full applicant detail +
+  deep link to `/admin#applications`); the applicant gets a "received, reviewed within 24h" email + SMS.
+- **Applicant lifecycle:** approve/reject now send email **and** SMS (approve carries the temp password +
+  `/login?role=rider`); a rider's first-ever claim fires a welcome + verified-fill reminder (pool-safe
+  detection: `ratingCount===0 && totalOrders===claimedCount`).
+- **Role-aware `/login`:** `?role=rider|admin` switches heading/sub/CTAs + side panel (admin = plain dark,
+  no register links). Sign-out lands riders on `?role=rider`, admins on `?role=admin`; landing gained an
+  "Already a rider? Sign in" link.
+- **Admin self-management:** admins create other admins (welcome email) and soft-deactivate them
+  (`User.deactivatedAt`; can't log in; last-admin + self guards). New "Admin accounts" card on `/admin`.
+
+**Schema:** 1 additive migration (`add_admin_deactivation`, nullable `User.deactivatedAt`) applied to Neon.
+
+**Deviations from spec (small, noted with the user):** first-order detection generalised to be pool-safe;
+added a "can't remove yourself" guard beyond the last-admin rule; admin email deep-links to the
+`#applications` anchor (added to the card). All notifications route through `lib/services/*` (audited).
+
+**Pending (unchanged):** prod `migrate deploy` for the new migration on the next Vercel deploy; Resend
+still sandboxed (real recipient emails are rejected by the sandbox but logged — SMS via mNotify is live).

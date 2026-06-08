@@ -20,6 +20,9 @@ export function DashboardShell({
 }) {
   const firstName = name.split(" ")[0] ?? name;
   const initial = firstName.charAt(0).toUpperCase();
+  // Sign-out lands on the role-appropriate login variant (students go to the landing).
+  const signOutTo =
+    role === "ADMIN" ? "/login?role=admin" : role === "SUPPLIER" ? "/login?role=rider" : "/";
   return (
     <div className="min-h-dvh bg-background">
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -34,7 +37,7 @@ export function DashboardShell({
               {initial}
             </div>
             <Badge variant="muted" className="hidden sm:inline-flex">{roleLabel[role]}</Badge>
-            <SignOutButton />
+            <SignOutButton callbackUrl={signOutTo} />
           </div>
         </div>
       </header>
