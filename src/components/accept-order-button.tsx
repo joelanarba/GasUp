@@ -23,6 +23,7 @@ export function AcceptOrderButton({ orderId, poolSize }: { orderId: string; pool
       router.refresh();
       return;
     }
+    setBusy(false);
     router.refresh();
   }
 
