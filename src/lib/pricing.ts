@@ -6,7 +6,9 @@ export const GAS_PRICE_PER_KG = 14; // GHS — platform retail gas price charged
 export const DELIVERY_FEE_SOLO = 10; // GHS, single-stop trip
 export const DELIVERY_FEE_POOLED = 5; // GHS, shared hostel / nearby trip
 export const EXPRESS_SURCHARGE = 8; // GHS, premium priority delivery
-export const RIDER_CUT = 0.75; // rider's share of the delivery fee (their earnings per trip)
+// Per the Business Model Canvas, GasUp takes a 20–30% platform commission of the delivery
+// fee per trip. We use 25% (the midpoint). The rider keeps the remaining 75% of the fee.
+export const PLATFORM_COMMISSION = 0.25;
 
 export type FeeBreakdown = {
   gasCost: number;
@@ -25,10 +27,9 @@ export function computeFee(
   return { gasCost, deliveryFee, expressSurcharge, total: gasCost + deliveryFee + expressSurcharge };
 }
 
-/** What a rider earns from a single stop's delivery fee (their cut of it). */
-export function riderEarn(opts: { pooled?: boolean } = {}): number {
-  const deliveryFee = opts.pooled ? DELIVERY_FEE_POOLED : DELIVERY_FEE_SOLO;
-  return Math.round(deliveryFee * RIDER_CUT * 100) / 100;
+/** What a rider keeps from a delivery fee after GasUp's platform commission. */
+export function riderEarnFromFee(deliveryFee: number): number {
+  return Math.round(deliveryFee * (1 - PLATFORM_COMMISSION) * 100) / 100;
 }
 
 export function formatGhs(amount: number): string {

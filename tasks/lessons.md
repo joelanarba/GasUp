@@ -104,6 +104,15 @@ Append a new entry after any correction. Format: **Pattern** → the rule that p
   `/api/auth/csrf` with `-SessionVariable`, POST form-urlencoded `{csrfToken,email,password,json:true}` to
   `/api/auth/callback/credentials`, then reuse the `-WebSession`; confirm with `/api/auth/session`. This is
   the connection-light, lessons-approved way to smoke admin-only routes against `next start`.
+- **Windows PowerShell 5.1 `Set-Content -Encoding utf8` writes a UTF-8 BOM**, and Postgres rejects a BOM
+  at the start of a migration: `migrate deploy` failed with `P3018` / `42601 syntax error at or near "﻿"`
+  (U+FEFF). Because the BOM fails parsing at position 0, NO DDL runs (schema untouched), but a *failed*
+  row is recorded in `_prisma_migrations`, blocking further deploys. → Never author files other tools
+  read (SQL, JSON, .sql migrations) with PS5.1 `Set-Content/Out-File -Encoding utf8`; use the Write tool
+  (no BOM) or `[IO.File]::WriteAllText(path,text)` / PS7 `utf8NoBOM`. Recover a BOM-poisoned migration:
+  fix the file, `prisma migrate resolve --rolled-back <name>`, then `prisma migrate deploy` again. When
+  hand-creating a migration non-interactively, prefer `migrate diff … --script` piped to the Write tool.
+
 - **"Use my location" must reverse-geocode, not just drop a pin.** The GPS button only set the map
   pin's lat/lng; it never filled the "Delivery address" text, which the order form requires (`!address.trim()`
   blocks submit). So GPS "did nothing" and students were forced to type. → When coordinates feed a form

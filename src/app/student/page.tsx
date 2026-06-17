@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { PredictionCard } from "@/components/prediction-card";
 import { SavingsCard } from "@/components/savings-card";
+import { ReferralCard } from "@/components/referral-card";
+import { SupportButton } from "@/components/support-button";
 import { cylinderLabel, kgFor } from "@/lib/cylinders";
 import { computePrediction, estimateFromProfile, type Delivery } from "@/lib/prediction";
 
@@ -113,6 +115,12 @@ export default async function StudentDashboard() {
         <SavingsCard pooledCount={pooledCount} totalOrders={totalOrders} />
       </div>
 
+      {student?.referralCode && (
+        <div className="reveal mt-4" style={{ animationDelay: "240ms" }}>
+          <ReferralCard code={student.referralCode} />
+        </div>
+      )}
+
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card className="reveal hover-lift" style={{ animationDelay: "240ms" }}>
           <CardHeader>
@@ -150,6 +158,8 @@ export default async function StudentDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <SupportButton />
     </DashboardShell>
   );
 }

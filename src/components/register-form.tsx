@@ -20,6 +20,7 @@ export function RegisterForm() {
     phone: "",
     password: "",
     householdSize: "1",
+    referralCode: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,12 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input id="password" type="password" autoComplete="new-password" required value={form.password} onChange={set("password")} placeholder="At least 8 characters" />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="referralCode">Referral code <span className="text-muted-foreground">(optional)</span></Label>
+        <Input id="referralCode" value={form.referralCode} onChange={set("referralCode")} placeholder="e.g. AKUA2847" className="uppercase" />
+        <p className="text-xs text-muted-foreground">Got a friend&apos;s code? Enter it to get GHS 5 off your first delivery.</p>
       </div>
 
       {error && (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { uniqueReferralCode } from "@/lib/referral";
 
 // Student self-registration only. Suppliers are admin-created; admin is seeded.
 const schema = z.object({
@@ -15,6 +16,7 @@ const schema = z.object({
     .or(z.literal("")),
   password: z.string().min(8, "Password must be at least 8 characters"),
   householdSize: z.coerce.number().int().min(1).max(12),
+  referralCode: z.string().trim().toUpperCase().optional().or(z.literal("")),
 });
 
 export async function POST(req: Request) {
@@ -42,6 +44,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // Record the referrer only if the supplied code matches a real user's code.
+  let referredBy: string | null = null;
+  if (data.referralCode) {
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode: data.referralCode },
+      select: { id: true },
+    });
+    if (referrer) referredBy = data.referralCode;
+  }
+
   await prisma.user.create({
     data: {
       fullName: data.fullName,
@@ -50,6 +62,8 @@ export async function POST(req: Request) {
       role: "STUDENT",
       householdSize: data.householdSize,
       passwordHash: await bcrypt.hash(data.password, 10),
+      referralCode: await uniqueReferralCode(data.fullName),
+      referredBy,
     },
   });
 

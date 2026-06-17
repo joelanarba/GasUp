@@ -13,6 +13,7 @@ import { StatusTimeline } from "@/components/status-timeline";
 import { OrderActions } from "@/components/order-actions";
 import { ReviewForm } from "@/components/review-form";
 import { PayButton } from "@/components/pay-button";
+import { SupportButton } from "@/components/support-button";
 import { cylinderLabel } from "@/lib/cylinders";
 import { formatGhs } from "@/lib/pricing";
 
@@ -212,6 +213,8 @@ export default async function StudentOrderDetail({ params }: { params: { id: str
           </CardContent>
         </Card>
       )}
+
+      <SupportButton orderId={order.id} />
     </DashboardShell>
   );
 }

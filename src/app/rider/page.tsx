@@ -12,7 +12,7 @@ import { CashPaidButton } from "@/components/cash-paid-button";
 import { TrustBadge } from "@/components/trust-badge";
 import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
-import { formatGhs, riderEarn } from "@/lib/pricing";
+import { formatGhs, riderEarnFromFee, DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED, PLATFORM_COMMISSION } from "@/lib/pricing";
 import { distanceMeters, formatDistance } from "@/lib/geo";
 import { type Prisma } from "@prisma/client";
 
@@ -80,7 +80,10 @@ export default async function RiderDashboard() {
       key,
       orders,
       distance: dists.length ? Math.min(...dists) : null,
-      earn: orders.reduce((s, o) => s + riderEarn({ pooled: o.poolId != null }), 0),
+      earn: orders.reduce(
+        (s, o) => s + riderEarnFromFee(o.poolId != null ? DELIVERY_FEE_POOLED : DELIVERY_FEE_SOLO),
+        0,
+      ),
       express: orders.some((o) => o.express),
       createdAt: orders.reduce((min, o) => (o.createdAt < min ? o.createdAt : min), orders[0].createdAt),
     };
@@ -114,6 +117,10 @@ export default async function RiderDashboard() {
           <p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-3.5 w-3.5 fill-accent text-accent" />
             {supplier.ratingCount > 0 ? `${supplier.ratingAvg.toFixed(1)} (${supplier.ratingCount})` : "New"}
+          </p>
+          <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Coins className="h-3 w-3" />
+            Platform fee {Math.round(PLATFORM_COMMISSION * 100)}% · you keep the rest
           </p>
         </div>
       </div>
@@ -188,7 +195,7 @@ function AvailableTripCard({ trip }: { trip: Trip }) {
               {trip.distance != null ? `${formatDistance(trip.distance)} away` : "Distance n/a"}
             </span>
             <span className="inline-flex items-center gap-1 font-semibold text-success">
-              <Coins className="h-3.5 w-3.5" /> Earn {formatGhs(trip.earn)}
+              <Coins className="h-3.5 w-3.5" /> You earn {formatGhs(trip.earn)}
             </span>
           </CardDescription>
         </div>

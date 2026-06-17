@@ -365,3 +365,68 @@ added a "can't remove yourself" guard beyond the last-admin rule; admin email de
 
 **Pending (unchanged):** prod `migrate deploy` for the new migration on the next Vercel deploy; Resend
 still sandboxed (real recipient emails are rejected by the sandbox but logged — SMS via mNotify is live).
+
+## Phase 15 — Business Model Canvas alignment
+
+Four changes (2026-06-16) to align the app with the submitted BMC. Worked in order, each verified to
+compile + run before the next. No architecture changes; reuses existing engines/services.
+
+### 15.1 — Revenue model: commission-based pricing ✅
+- [x] `pricing.ts`: removed `RIDER_CUT`; added `PLATFORM_COMMISSION = 0.25` (BMC 20–30%, midpoint).
+      Replaced `riderEarn({pooled})` with `riderEarnFromFee(deliveryFee)` → `deliveryFee × (1 − 0.25)`.
+      Rider take-home is numerically unchanged (0.75 either way) — re-framed as an explicit platform
+      commission to match the BMC instead of an arbitrary "rider cut."
+- [x] Rider board (`rider/page.tsx`): trip earn now sums `riderEarnFromFee(pooled?5:10)`; card label
+      "Earn" → "You earn"; added header note "Platform fee 25% · you keep the rest".
+- [x] Admin (`admin/page.tsx`): repurposed the misleading "Revenue (GHS)" tile (was gross student spend)
+      → "Commission (GHS)" = (paidSolo×10 + paidPooled×5) × 0.25, the platform's real revenue.
+- [x] VERIFIED: `tsc --noEmit` + `next lint` clean; real-auth render — `/rider` 200 shows "You earn" +
+      "Platform fee 25% · you keep the rest"; `/admin` 200 shows "Commission (GHS)" (old label gone).
+
+### 15.2 — Enhanced GPS tracking simulation (road-following + ETA) ✅
+- [x] `delivery-map.tsx` rewritten: fetches OpenRouteService driving-car GeoJSON (depot→dest), decodes
+      [lng,lat]→[lat,lng], animates the rider marker by interpolating along the road polyline's cumulative
+      length (smooth, no jumps), loops with a ~1s "Arriving now" hold. Dashed orange route (#E0521E
+      unchanged). Live ETA bar above the map ("≈ X min away", counts down; seeded from route length ÷ 25 km/h)
+      with a pulsing dot. **Decision (user): key via `NEXT_PUBLIC_ORS_API_KEY` env var** — absent/failed/
+      rate-limited/CORS/bad-shape → graceful try-catch fallback to the straight depot→hostel line (never
+      crashes). `delivery-tracker.tsx` unchanged (still the ssr:false dynamic wrapper); no other files touched.
+      The existing "Simulated" badge lives on the order-detail page and stays.
+- [x] VERIFIED (compile): `tsc --noEmit` + `next lint` clean; full `next build` compiled the client chunk
+      (`/student/orders/[id]` bundles it). NOTE: the map is `ssr:false` (client-only) so it can't be runtime-
+      rendered via HTTP, and the live road path needs an ORS key (none available here) — so road-following
+      itself is unverified at runtime; the **fallback straight-line path is the active behavior until a key
+      is set**. To enable + see real roads: add a free `NEXT_PUBLIC_ORS_API_KEY` (openrouteservice.org).
+
+### 15.3 — In-app chat support (WhatsApp deep link) ✅
+- [x] `support-button.tsx` (plain anchors — no client JS, opens WhatsApp natively): `SupportButton`
+      floating bubble (`flame-gradient` + `pulse-glow`, fixed bottom-right, MessageCircle, mobile-sized
+      h-14) and `SupportLink` (compact header link). Placeholder number `233200000000`; message URL-encoded
+      via `encodeURIComponent`. `orderId` prop pre-fills "…help with order <id>".
+- [x] Wired: `SupportButton` on student dashboard + order detail (with orderId); `SupportLink` in
+      `DashboardShell` header next to Sign out (icon always, "Chat Support" text on sm+).
+- [x] VERIFIED (real-auth render): `/student` 200 — bubble + `wa.me/233200000000` + "help with my order"
+      + header "Chat Support" all present; order detail 200 — message pre-filled with the order id.
+      `tsc --noEmit` + `next lint` clean.
+
+### 15.4 — Referral code system ("Give GHS 5, Get GHS 5") — code complete, DB apply pending
+- [x] Schema: `User.referralCode String? @unique` + `referredBy String?`. Migration file
+      `20260617001834_add_referral` created via `migrate diff` (live DB → schema, no shadow DB) since
+      `migrate dev` is interactive-only in this harness. Client regenerated (`prisma generate`).
+- [x] `src/lib/referral.ts`: `genReferralCode` (4 name-letters + 4 digits, uppercase; "GAS" fallback) +
+      `uniqueReferralCode` (retries on collision). Used by `/api/register`: generates the new student's
+      code; records `referredBy` only when the entered code matches a real user.
+- [x] Register form: optional "Referral code" field (uppercased, AKUA2847 placeholder + GHS-5-off hint).
+- [x] `ReferralCard` (copy-to-clipboard + WhatsApp share `wa.me/?text=…`) on the student dashboard below
+      SavingsCard (rendered only when the student has a code).
+- [x] Seed: deterministic codes for the 5 students (AKUA2847/KOFI3162/ESIB4490/NANA5731/YAAA1908) in both
+      upsert branches (idempotent).
+- [x] VERIFIED (no-DB-write parts): `tsc --noEmit` + `next lint` clean; `GET /register` renders the new
+      field + hint.
+- [x] FIXED BOM bug: the hand-written `migration.sql` had a UTF-8 BOM (PS5.1 `Set-Content -Encoding utf8`)
+      → `migrate deploy` failed `P3018`/`42601` before any DDL ran (schema untouched, but a failed marker
+      was recorded). Rewrote the file clean (no BOM, verified bytes `2D 2D 20`). See lessons.md.
+- [ ] **BLOCKED on user (shared Neon DB write, correctly gated):** clear the failed marker, re-apply, seed.
+      Until applied the columns don't exist and `/student` 500s. Run in order:
+      `npx prisma migrate resolve --rolled-back 20260617001834_add_referral`
+      then `npx prisma migrate deploy` then `npm run seed`. Then I'll runtime-verify the card + register codegen.

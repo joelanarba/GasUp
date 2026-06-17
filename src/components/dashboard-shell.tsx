@@ -2,6 +2,7 @@ import { type Role } from "@prisma/client";
 import { Brand } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/sign-out-button";
+import { SupportLink } from "@/components/support-button";
 
 const roleLabel: Record<Role, string> = {
   STUDENT: "Student",
@@ -37,6 +38,7 @@ export function DashboardShell({
               {initial}
             </div>
             <Badge variant="muted" className="hidden sm:inline-flex">{roleLabel[role]}</Badge>
+            <SupportLink />
             <SignOutButton callbackUrl={signOutTo} />
           </div>
         </div>

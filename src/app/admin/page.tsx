@@ -14,7 +14,7 @@ import { ApplicationActions } from "@/components/application-actions";
 import { poolingImpact } from "@/lib/impact";
 import { supplierTrustMap } from "@/lib/trust-data";
 import { cylinderLabel } from "@/lib/cylinders";
-import { formatGhs } from "@/lib/pricing";
+import { formatGhs, PLATFORM_COMMISSION, DELIVERY_FEE_SOLO, DELIVERY_FEE_POOLED } from "@/lib/pricing";
 import { STATUS_META } from "@/lib/order-status";
 
 export default async function AdminDashboard() {
@@ -22,12 +22,13 @@ export default async function AdminDashboard() {
   const name = session?.user?.name ?? "Admin";
   const currentAdminId = session?.user?.id;
 
-  const [students, suppliers, orders, paid, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders, applications, admins] =
+  const [students, suppliers, orders, paidPooled, paidSolo, disputes, logs, byStatus, bySupplier, pooledCount, poolCount, supplierList, recentOrders, applications, admins] =
     await Promise.all([
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.supplier.count(),
       prisma.order.count(),
-      prisma.order.aggregate({ where: { paymentStatus: "PAID" }, _sum: { feeGhs: true } }),
+      prisma.order.count({ where: { paymentStatus: "PAID", poolId: { not: null } } }),
+      prisma.order.count({ where: { paymentStatus: "PAID", poolId: null } }),
       prisma.order.findMany({
         where: { status: "DISPUTED" },
         include: { student: true, supplier: true },
@@ -59,11 +60,15 @@ export default async function AdminDashboard() {
       }),
     ]);
 
+  // Platform revenue = GasUp's commission on the delivery fee of every PAID order.
+  const deliveryFeesCollected = paidSolo * DELIVERY_FEE_SOLO + paidPooled * DELIVERY_FEE_POOLED;
+  const commissionCollected = Math.round(deliveryFeesCollected * PLATFORM_COMMISSION);
+
   const stats = [
     { icon: Users, label: "Students", value: students },
     { icon: Store, label: "Riders", value: suppliers },
     { icon: Package, label: "Orders", value: orders },
-    { icon: BarChart3, label: "Revenue (GHS)", value: paid._sum.feeGhs ?? 0 },
+    { icon: BarChart3, label: "Commission (GHS)", value: commissionCollected },
   ];
 
   const statusData = byStatus.map((s) => ({

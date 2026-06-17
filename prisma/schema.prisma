@@ -10,8 +10,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -72,6 +73,10 @@ model User {
   defaultLat     Float?
   defaultLng     Float?
   householdSize  Int      @default(1) // seeds the burn-rate model
+
+  // referral program ("Give GHS 5, Get GHS 5")
+  referralCode String? @unique // this user's own share code (e.g. AKUA2847)
+  referredBy   String? // the referral code used at signup, if any
 
   // onboarding "gas profile" → powers Day-One prediction before any real refill history
   defaultCylinderSize CylinderSize? // their usual cylinder size
